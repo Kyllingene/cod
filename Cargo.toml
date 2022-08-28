@@ -7,8 +7,8 @@ description = "A mini terminal drawing utility."
 authors = ["Kyllingene"]
 license = "MIT"
 
-repository = "https://github.com/Kyllingene/ted"
-homepage = "https://github.com/Kyllingene/ted"
+repository = "https://github.com/Kyllingene/cod"
+homepage = "https://github.com/Kyllingene/cod"
 
 categories = ["command-line-interface"]
 keywords = ["tui", "terminal", "command-line"]

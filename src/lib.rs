@@ -2,7 +2,8 @@ use std::cmp::{max, min};
 use std::io::{stdout, Write};
 use std::{thread, time};
 
-pub fn escape<T: std::fmt::Display>(code: T) {
+/// Print an escape sequence
+fn escape<T: std::fmt::Display>(code: T) {
     print!("{}[{}", 27 as char, code);
 }
 
@@ -68,6 +69,7 @@ pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
     }
 }
 
+/// Draw a line onto the screen
 pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
     if x1 == x2 || y1 == y2 {
         orth_line(c, x1, x2, y1, y2);
@@ -133,6 +135,7 @@ pub fn blit(src: &Vec<Vec<char>>, sx: u32, sy: u32) {
     }
 }
 
+/// Draw a "texture" onto the screen
 pub fn blit_str(src: &String, x: u32, y: u32) {
     let split = String::from(src)
         .split('\n')
@@ -142,6 +145,7 @@ pub fn blit_str(src: &String, x: u32, y: u32) {
     blit(&split, x, y);
 }
 
+/// Draw a "texture" onto the screen
 pub fn blit_vstrs(src: &Vec<String>, x: u32, y: u32) {
     let vec = src.iter().map(|s| s.chars()).map(|c| c.collect()).collect();
     blit(&vec, x, y);
