@@ -1,0 +1,20 @@
+[package]
+name = "cod"
+version = "1.1.0"
+edition = "2021"
+
+description = "A mini terminal drawing utility."
+authors = ["Kyllingene"]
+license = "MIT"
+
+repository = "https://github.com/Kyllingene/ted"
+homepage = "https://github.com/Kyllingene/ted"
+
+categories = ["command-line-interface"]
+keywords = ["tui", "terminal", "command-line"]
+
+[dependencies]
+
+[lib]
+name = "cod" 
+path = "src/lib.rs"
