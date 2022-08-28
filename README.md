@@ -1,5 +1,5 @@
-# ted
-#### terminal drawer
+# cod
+#### command-line drawer
 
 ## features
  - rectangles, triangles, and lines
