@@ -37,10 +37,14 @@ pub fn clear() {
     print!("{}c", 27 as char);
 }
 
+/// Clear a portion of the screen
+pub fn erase(x1: u32, y1: u32, x2: u32, y2: u32) {
+    rect(' ', x1, y1, x2, y2);
+}
+
 /// Draw a single character onto the screen
 pub fn pixel(c: char, x: u32, y: u32) {
     escape(format!("{};{}H{}", y, x, c));
-    stdout().flush().unwrap();
 }
 
 /// Draw an orthogonal line to the screen
@@ -198,12 +202,15 @@ pub fn goto(x: u32, y: u32) {
 /// Put cursor to top of screen
 pub fn home() {
     goto(1, 1);
-    stdout().flush().unwrap();
 }
 
 /// Put cursor to the bottom of the screen
 pub fn bot() {
     goto(1, 9999);
+}
+
+/// Flush everything you've drawn to stdout
+pub fn flush() {
     stdout().flush().unwrap();
 }
 
