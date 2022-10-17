@@ -198,11 +198,13 @@ pub fn goto(x: u32, y: u32) {
 /// Put cursor to top of screen
 pub fn home() {
     goto(1, 1);
+    stdout().flush().unwrap();
 }
 
 /// Put cursor to the bottom of the screen
 pub fn bot() {
     goto(1, 9999);
+    stdout().flush().unwrap();
 }
 
 // TODO: probably remove
