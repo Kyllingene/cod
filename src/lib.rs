@@ -44,7 +44,7 @@ pub fn erase(x1: u32, y1: u32, x2: u32, y2: u32) {
 
 /// Draw a single character onto the screen
 pub fn pixel(c: char, x: u32, y: u32) {
-    escape(format!("{};{}H{}", y - 1, x - 1, c));
+    escape(format!("{};{}H{}", y + 1, x + 1, c));
 }
 
 /// Draw an orthogonal line to the screen
@@ -194,7 +194,7 @@ pub fn text<T: IntoIterator<Item = char>>(s: T, mut x: u32, y: u32) {
 
 /// Set cursor to position
 pub fn goto(x: u32, y: u32) {
-    escape(format!("{};{}H", y - 1, x - 1));
+    escape(format!("{};{}H", y + 1, x + 1));
 }
 
 /// Put cursor to top of screen
@@ -254,5 +254,31 @@ impl InputField {
 
     pub fn poll(&self) {
         todo!()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    pub fn text_with_flashing_rect() {
+        use super::*;
+
+        let msg = String::from("Hello, World!");
+        let len = msg.len() as u32;
+
+        loop {
+            clear();
+
+            rect('#', 0, 0, len+1, 2);
+            text(msg.chars(), 1, 1);
+
+            sleep(1.);
+            flush();
+
+            rect_fill('+', 1, 1, len, 1);
+
+            sleep(1.);
+            flush();
+        }
     }
 }
