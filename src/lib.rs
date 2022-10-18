@@ -1,6 +1,5 @@
 use std::cmp::{max, min};
 use std::io::{stdout, Write};
-use std::{thread, time};
 
 #[cfg(feature = "input")]
 use console::{Key, Term};
@@ -217,12 +216,6 @@ pub fn flush() {
 
 // TODO: probably remove
 /// Pause for a certain amount of seconds
-pub fn sleep(seconds: f32) {
-    let secs = seconds as u64;
-    let mils = (seconds % 1.0 * 1000.0 * 1000000.0) as u32;
-    thread::sleep(time::Duration::new(secs, mils));
-}
-
 #[cfg(feature = "input")]
 pub struct InputField {
     length: Option<usize>,
