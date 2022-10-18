@@ -1,8 +1,9 @@
 # cod
-#### command-line drawer
+#### COnsole Drawer
 
-## features
- - rectangles, triangles, and lines
+## Features
+ - Rectangles, triangles, and lines
  - 8-bit and 24-bit color support
- - text
- - blit
+ - Text
+ - Blitting `String`s, `Vec<String>`s, and `Vec<Vec<char>>`s
+ - Basic input prompts
