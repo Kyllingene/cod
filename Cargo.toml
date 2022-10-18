@@ -14,7 +14,11 @@ categories = ["command-line-interface"]
 keywords = ["tui", "terminal", "command-line"]
 
 [dependencies]
+console = "0.15.2"
 
 [lib]
-name = "cod" 
+name = "cod"
 path = "src/lib.rs"
+
+[features]
+input = []

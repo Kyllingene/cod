@@ -1,6 +1,9 @@
 use std::cmp::{max, min};
 use std::io::{stdout, Write};
-use std::{thread, time, usize};
+use std::{thread, time};
+
+#[cfg(feature = "input")]
+use console::{Key, Term};
 
 /// Print an escape sequence
 fn escape<T: std::fmt::Display>(code: T) {
@@ -180,8 +183,8 @@ pub fn triangle(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
 }
 
 /// Draw a filled triangle onto the screen
-pub fn triangle_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
-    unimplemented!();
+pub fn triangle_fill(_c: char, _x1: u32, _y1: u32, _x2: u32, _y2: u32, _x3: u32, _y3: u32) {
+    todo!();
 }
 
 /// Draw text onto the screen (non-wrapping)
@@ -220,25 +223,93 @@ pub fn sleep(seconds: f32) {
     thread::sleep(time::Duration::new(secs, mils));
 }
 
-#[allow(unused)]
-struct InputField {
+#[cfg(feature = "input")]
+pub struct InputField {
     length: Option<usize>,
     data: String,
+    pos: usize,
 }
 
-#[allow(unused)]
+#[cfg(feature = "input")]
 impl InputField {
     /// Creates a new textbox with a given (or no) length
     pub fn new(length: Option<usize>) -> Self {
-        Self{
+        Self {
             length,
             data: String::new(),
+            pos: 0,
         }
     }
 
+    /// Get the contents of the textbox
+    pub fn get(&self) -> String {
+        self.data.clone()
+    }
+
+    /// Clears the contents of the textbox
+    pub fn clear(&mut self) {
+        self.data.clear();
+        self.pos = 0;
+    }
+
     /// Draw the contents of the textbox
-    pub fn draw(&self, x: u32, y: u32) {
-        text(self.data.chars(), x, y);
+    pub fn draw(&self, mut x: u32, y: u32) {
+        decolor();
+        for (i, ch) in self.data.chars().enumerate() {
+            if i == self.pos {
+                color_bg(7);
+                color_fg(8);
+            } else if i == self.pos + 1 {
+                decolor();
+            }
+
+            pixel(ch, x, y);
+
+            x += 1;
+        }
+
+        if self.pos == self.data.len() {
+            color_bg(7);
+            color_fg(8);
+            pixel(' ', x, y);
+        }
+    }
+
+    /// Collects input until it recieves a newline
+    ///
+    /// TODO: Doesn't currently provide visual feedback
+    pub fn get_line(&mut self) {
+        let stdout = Term::buffered_stdout();
+        loop {
+            if let Ok(key) = stdout.read_key() {
+                match key {
+                    Key::Backspace => {
+                        if self.pos > 0 {
+                            self.pos -= 1;
+                            self.data.remove(self.pos);
+                        }
+                    }
+                    Key::Char(ch) => {
+                        if self.data.len() < self.length.unwrap_or(usize::MAX) {
+                            self.data.insert(self.pos, ch);
+                            self.pos += 1;
+                        }
+                    }
+                    Key::ArrowLeft => {
+                        if self.pos > 0 {
+                            self.pos -= 1;
+                        }
+                    }
+                    Key::ArrowRight => {
+                        if self.pos < self.data.len() {
+                            self.pos += 1;
+                        }
+                    }
+                    Key::Enter => break,
+                    _ => {}
+                }
+            }
+        }
     }
 
     /// Add a character to the textbox; if the textbox is full, returns false
@@ -248,37 +319,41 @@ impl InputField {
         }
 
         self.data.push(c);
+        self.pos += 1;
 
         true
     }
 
-    pub fn poll(&self) {
-        todo!()
-    }
-}
+    /// Tries to read a single key; non-blocking
+    pub fn poll(&mut self) {
+        let stdout = Term::buffered_stdout();
 
-#[cfg(test)]
-mod test {
-    #[test]
-    pub fn text_with_flashing_rect() {
-        use super::*;
-
-        let msg = String::from("Hello, World!");
-        let len = msg.len() as u32;
-
-        loop {
-            clear();
-
-            rect('#', 0, 0, len+1, 2);
-            text(msg.chars(), 1, 1);
-
-            sleep(1.);
-            flush();
-
-            rect_fill('+', 1, 1, len, 1);
-
-            sleep(1.);
-            flush();
+        if let Ok(key) = stdout.read_key() {
+            match key {
+                Key::Backspace => {
+                    if self.pos > 0 {
+                        self.pos -= 1;
+                        self.data.remove(self.pos);
+                    }
+                }
+                Key::Char(ch) => {
+                    if self.data.len() < self.length.unwrap_or(usize::MAX) {
+                        self.data.insert(self.pos, ch);
+                        self.pos += 1;
+                    }
+                }
+                Key::ArrowLeft => {
+                    if self.pos > 0 {
+                        self.pos -= 1;
+                    }
+                }
+                Key::ArrowRight => {
+                    if self.pos < self.data.len() {
+                        self.pos += 1;
+                    }
+                }
+                _ => {}
+            }
         }
     }
 }
