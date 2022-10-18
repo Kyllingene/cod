@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 use std::io::{stdout, Write};
-use std::{thread, time};
+use std::{thread, time, usize};
 
 /// Print an escape sequence
 fn escape<T: std::fmt::Display>(code: T) {
@@ -44,7 +44,7 @@ pub fn erase(x1: u32, y1: u32, x2: u32, y2: u32) {
 
 /// Draw a single character onto the screen
 pub fn pixel(c: char, x: u32, y: u32) {
-    escape(format!("{};{}H{}", y, x, c));
+    escape(format!("{};{}H{}", y - 1, x - 1, c));
 }
 
 /// Draw an orthogonal line to the screen
@@ -185,10 +185,8 @@ pub fn triangle_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u
 }
 
 /// Draw text onto the screen (non-wrapping)
-pub fn text(s: String, ox: u32, y: u32) {
-    let mut x = ox;
-
-    for c in s.chars() {
+pub fn text<T: IntoIterator<Item = char>>(s: T, mut x: u32, y: u32) {
+    for c in s {
         pixel(c, x, y);
         x += 1;
     }
@@ -196,7 +194,7 @@ pub fn text(s: String, ox: u32, y: u32) {
 
 /// Set cursor to position
 pub fn goto(x: u32, y: u32) {
-    escape(format!("{};{}H", y, x));
+    escape(format!("{};{}H", y - 1, x - 1));
 }
 
 /// Put cursor to top of screen
@@ -206,7 +204,7 @@ pub fn home() {
 
 /// Put cursor to the bottom of the screen
 pub fn bot() {
-    goto(1, 9999);
+    goto(0, 9998);
 }
 
 /// Flush everything you've drawn to stdout
@@ -220,4 +218,41 @@ pub fn sleep(seconds: f32) {
     let secs = seconds as u64;
     let mils = (seconds % 1.0 * 1000.0 * 1000000.0) as u32;
     thread::sleep(time::Duration::new(secs, mils));
+}
+
+#[allow(unused)]
+struct InputField {
+    length: Option<usize>,
+    data: String,
+}
+
+#[allow(unused)]
+impl InputField {
+    /// Creates a new textbox with a given (or no) length
+    pub fn new(length: Option<usize>) -> Self {
+        Self{
+            length,
+            data: String::new(),
+        }
+    }
+
+    /// Draw the contents of the textbox
+    pub fn draw(&self, x: u32, y: u32) {
+        text(self.data.chars(), x, y);
+    }
+
+    /// Add a character to the textbox; if the textbox is full, returns false
+    pub fn ch(&mut self, c: char) -> bool {
+        if self.data.len() >= self.length.unwrap_or(usize::MAX) {
+            return false;
+        }
+
+        self.data.push(c);
+
+        true
+    }
+
+    pub fn poll(&self) {
+        todo!()
+    }
 }
