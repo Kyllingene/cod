@@ -4,6 +4,43 @@ use std::io::{stdout, Write};
 #[cfg(feature = "input")]
 use console::{Key, Term};
 
+#[allow(unused)]
+enum BoxDrawingChar {
+    Horizontal,
+    Vertical,
+
+    TopLeftCorner,
+    TopRightCorner,
+    BottomLeftCorner,
+    BottomRightCorner,
+
+    TopT,
+    LeftT,
+    RightT,
+    BottomT,
+    MiddleT,
+}
+
+impl Into<char> for BoxDrawingChar {
+    fn into(self) -> char {
+        match self {
+            Self::Horizontal => '\u{2550}',
+            Self::Vertical => '\u{2551}',
+
+            Self::TopLeftCorner => '\u{2554}',
+            Self::TopRightCorner => '\u{2557}',
+            Self::BottomLeftCorner => '\u{255A}',
+            Self::BottomRightCorner => '\u{255D}',
+
+            Self::TopT => '\u{2566}',
+            Self::LeftT => '\u{2560}',
+            Self::RightT => '\u{2563}',
+            Self::BottomT => '\u{2569}',
+            Self::MiddleT => '\u{256C}',
+        }
+    }
+}
+
 /// Print an escape sequence
 fn escape<T: std::fmt::Display>(code: T) {
     print!("{}[{}", 27 as char, code);
@@ -165,6 +202,21 @@ pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
     orth_line(c, x2, y2, x2, y1);
 }
 
+/// Draw a box using ASCII box-drawing characters
+///
+/// Attempting to draw boxes less than 2x2 will look terrible
+pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) {
+    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y1, x2-1, y1);
+    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y2, x2-1, y2);
+    orth_line(BoxDrawingChar::Vertical.into(), x1, y1+1, x1, y2-1);
+    orth_line(BoxDrawingChar::Vertical.into(), x2, y1+1, x2, y2-1);
+
+    pixel(BoxDrawingChar::TopLeftCorner.into(), x1, y1);
+    pixel(BoxDrawingChar::TopRightCorner.into(), x2, y1);
+    pixel(BoxDrawingChar::BottomLeftCorner.into(), x1, y2);
+    pixel(BoxDrawingChar::BottomRightCorner.into(), x2, y2);
+}
+
 /// Draw a filled rectangle onto the screen
 pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
     let mut y = y1;
@@ -214,7 +266,6 @@ pub fn flush() {
     stdout().flush().unwrap();
 }
 
-// TODO: probably remove
 /// Pause for a certain amount of seconds
 #[cfg(feature = "input")]
 pub struct InputField {
@@ -270,10 +321,21 @@ impl InputField {
 
     /// Collects input until it recieves a newline
     ///
-    /// TODO: Doesn't currently provide visual feedback
-    pub fn get_line(&mut self) {
+    /// NOTE: WILL overwrite any characters drawn in its path
+    /// NOTE: WILL overwrite one character past the end (it has to do with the cursor, it's unfixable :/)
+    pub fn get_line(&mut self, x: u32, y: u32) {
         let stdout = Term::buffered_stdout();
+        let _ = stdout.hide_cursor();
         loop {
+            decolor();
+            for i in 0..=self.data.len() as u32 {
+                pixel(' ', x + i, y);
+            }
+
+            text(self.data.chars(), x, y);
+            bot(); // for when the terminal doesn't hide the cursor, it looks slightly better
+            flush();
+
             if let Ok(key) = stdout.read_key() {
                 match key {
                     Key::Backspace => {
@@ -303,6 +365,7 @@ impl InputField {
                 }
             }
         }
+        let _ = stdout.show_cursor();
     }
 
     /// Add a character to the textbox; if the textbox is full, returns false
