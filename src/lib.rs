@@ -272,6 +272,9 @@ pub struct InputField {
     length: Option<usize>,
     data: String,
     pos: usize,
+
+    pub up_arrow: bool,
+    pub down_arrow: bool,
 }
 
 #[cfg(feature = "input")]
@@ -282,6 +285,9 @@ impl InputField {
             length,
             data: String::new(),
             pos: 0,
+
+            up_arrow: false,
+            down_arrow: false,
         }
     }
 
@@ -337,6 +343,18 @@ impl InputField {
             flush();
 
             if let Ok(key) = stdout.read_key() {
+                if key != Key::ArrowUp {
+                    self.up_arrow = false;
+                } else {
+                    self.up_arrow = true;
+                }
+
+                if key != Key::ArrowDown {
+                    self.down_arrow = false;
+                } else {
+                    self.down_arrow = true;
+                }
+
                 match key {
                     Key::Backspace => {
                         if self.pos > 0 {
