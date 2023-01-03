@@ -308,7 +308,7 @@ impl InputField {
         }
         
         self.data = new;
-        self.pos = new.len();
+        self.pos = self.data.len();
 
         true
     }
