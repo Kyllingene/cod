@@ -298,6 +298,21 @@ impl InputField {
         self.data.clone()
     }
 
+    /// Set the contents of the textbox
+    /// Cursor is automatically set to the end
+    /// 
+    /// Returns false if the string is too large for the input box
+    pub fn set(&mut self, new: String) -> bool {
+        if new.len() > self.length {
+            return false;
+        }
+        
+        self.data = new;
+        self.pos = new.len();
+
+        true
+    }
+
     /// Clears the contents of the textbox
     pub fn clear(&mut self) {
         self.data.clear();
