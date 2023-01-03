@@ -275,6 +275,7 @@ pub struct InputField {
 
     pub up_arrow: bool,
     pub down_arrow: bool,
+    pub newline: bool,
 }
 
 #[cfg(feature = "input")]
@@ -288,6 +289,7 @@ impl InputField {
 
             up_arrow: false,
             down_arrow: false,
+            newline: false,
         }
     }
 
@@ -343,18 +345,6 @@ impl InputField {
             flush();
 
             if let Ok(key) = stdout.read_key() {
-                if key != Key::ArrowUp {
-                    self.up_arrow = false;
-                } else {
-                    self.up_arrow = true;
-                }
-
-                if key != Key::ArrowDown {
-                    self.down_arrow = false;
-                } else {
-                    self.down_arrow = true;
-                }
-
                 match key {
                     Key::Backspace => {
                         if self.pos > 0 {
@@ -403,6 +393,19 @@ impl InputField {
         let stdout = Term::buffered_stdout();
 
         if let Ok(key) = stdout.read_key() {
+
+            if key != Key::ArrowUp {
+                self.up_arrow = false;
+            } else {
+                self.up_arrow = true;
+            }
+
+            if key != Key::ArrowDown {
+                self.down_arrow = false;
+            } else {
+                self.down_arrow = true;
+            }
+
             match key {
                 Key::Backspace => {
                     if self.pos > 0 {
@@ -425,6 +428,9 @@ impl InputField {
                     if self.pos < self.data.len() {
                         self.pos += 1;
                     }
+                }
+                Key::Enter => {
+                    self.newline = true;
                 }
                 _ => {}
             }
