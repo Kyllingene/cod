@@ -303,7 +303,7 @@ impl InputField {
     /// 
     /// Returns false if the string is too large for the input box
     pub fn set(&mut self, new: String) -> bool {
-        if new.len() > self.length {
+        if self.length.is_some() && new.len() > self.length.unwrap() {
             return false;
         }
         
