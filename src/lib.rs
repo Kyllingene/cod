@@ -2,7 +2,10 @@ use std::cmp::{max, min};
 use std::io::{stdout, Write};
 
 #[cfg(feature = "input")]
-use console::{Key, Term};
+use {
+    console::{Key, Term},
+    // std::collections::HashSet,
+};
 
 #[allow(unused)]
 enum BoxDrawingChar {
@@ -21,22 +24,22 @@ enum BoxDrawingChar {
     MiddleT,
 }
 
-impl Into<char> for BoxDrawingChar {
-    fn into(self) -> char {
-        match self {
-            Self::Horizontal => '\u{2550}',
-            Self::Vertical => '\u{2551}',
+impl From<BoxDrawingChar> for char {
+    fn from(val: BoxDrawingChar) -> char {
+        match val {
+            BoxDrawingChar::Horizontal => '\u{2550}',
+            BoxDrawingChar::Vertical => '\u{2551}',
 
-            Self::TopLeftCorner => '\u{2554}',
-            Self::TopRightCorner => '\u{2557}',
-            Self::BottomLeftCorner => '\u{255A}',
-            Self::BottomRightCorner => '\u{255D}',
-
-            Self::TopT => '\u{2566}',
-            Self::LeftT => '\u{2560}',
-            Self::RightT => '\u{2563}',
-            Self::BottomT => '\u{2569}',
-            Self::MiddleT => '\u{256C}',
+            BoxDrawingChar::TopLeftCorner => '\u{2554}',
+            BoxDrawingChar::TopRightCorner => '\u{2557}',
+            BoxDrawingChar::BottomLeftCorner => '\u{255A}',
+            BoxDrawingChar::BottomRightCorner => '\u{255D}',
+            
+            BoxDrawingChar::TopT => '\u{2566}',
+            BoxDrawingChar::LeftT => '\u{2560}',
+            BoxDrawingChar::RightT => '\u{2563}',
+            BoxDrawingChar::BottomT => '\u{2569}',
+            BoxDrawingChar::MiddleT => '\u{256C}',
         }
     }
 }
@@ -48,22 +51,22 @@ fn escape<T: std::fmt::Display>(code: T) {
 
 /// Set foreground color, using 24-bit true color (not supported on all terminals)
 pub fn tc_color_fg(r: u8, g: u8, b: u8) {
-    escape(format!("38;2;{};{};{}", r, g, b));
+    escape(format!("38;2;{r};{g};{b}"));
 }
 
 /// Set background color, using 24-bit true color (not supported on all terminals)
 pub fn tc_color_bg(r: u8, g: u8, b: u8) {
-    escape(format!("48;2;{};{};{}", r, g, b));
+    escape(format!("48;2;{r};{g};{b}"));
 }
 
 /// Set foreground color, using 8-bit color
 pub fn color_fg(color: u8) {
-    escape(format!("38;5;{}m", color));
+    escape(format!("38;5;{color}m"));
 }
 
 /// Set background color, using 8-bit color
 pub fn color_bg(color: u8) {
-    escape(format!("48;5;{}m", color));
+    escape(format!("48;5;{color}m"));
 }
 
 /// Remove all color modifiers
@@ -77,8 +80,8 @@ pub fn clear() {
 }
 
 /// Clear a portion of the screen
-pub fn erase(x1: u32, y1: u32, x2: u32, y2: u32) {
-    rect(' ', x1, y1, x2, y2);
+pub fn erase(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+    rect(' ', x1, y1, x2, y2)
 }
 
 /// Draw a single character onto the screen
@@ -87,10 +90,9 @@ pub fn pixel(c: char, x: u32, y: u32) {
 }
 
 /// Draw an orthogonal line to the screen
-pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
+pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     if x1 != x2 && y1 != y2 {
-        // TODO: replace with error handling
-        panic!("Cannot draw non-ortho lines with orth-line");
+        return Err("Cannot draw non-ortho lines with orth-line");
     }
 
     if x1 != x2 {
@@ -110,20 +112,22 @@ pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
             y += 1;
         }
     }
+
+    Ok(())
 }
 
 /// Draw a line onto the screen
-pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
+pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     if x1 == x2 || y1 == y2 {
-        orth_line(c, x1, x2, y1, y2);
-        return;
+        orth_line(c, x1, x2, y1, y2)?;
+        return Ok(());
     }
 
     let mut dx: i32 = (x2 - x1) as i32;
     let mut dy: i32 = (y2 - y1) as i32;
 
-    let sx = if (x2 as i32) - (x1 as i32) > 0 { 1 } else { -1 };
-    let sy = if (y2 as i32) - (y1 as i32) > 0 { 1 } else { -1 };
+    let sx = if x2 - x1 > 0 { 1 } else { -1 };
+    let sy = if y2 - y1 > 0 { 1 } else { -1 };
 
     let xx;
     let xy;
@@ -142,7 +146,7 @@ pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
         yy = 0i32;
     }
 
-    let mut err = ((dy << 1) - dx) as i32;
+    let mut err = (dy << 1) - dx;
 
     let mut x = 0;
     let mut y = 0;
@@ -156,12 +160,14 @@ pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
 
         if err >= 0 {
             y += 1;
-            err -= (dx as i32) << 1;
+            err -= dx << 1;
         }
 
-        err += (dy as i32) << 1;
+        err += dy << 1;
         x += 1;
     }
+
+    Ok(())
 }
 
 /// Draw a "texture" onto the screen
@@ -189,48 +195,54 @@ pub fn blit_str(src: &String, x: u32, y: u32) {
 }
 
 /// Draw a "texture" onto the screen
-pub fn blit_vstrs(src: &Vec<String>, x: u32, y: u32) {
+pub fn blit_vstrs(src: &[String], x: u32, y: u32) {
     let vec = src.iter().map(|s| s.chars()).map(|c| c.collect()).collect();
     blit(&vec, x, y);
 }
 
 /// Draw a rectangle onto the screen
-pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
-    orth_line(c, x1, y1, x1, y2);
-    orth_line(c, x1, y1, x2, y1);
-    orth_line(c, x2, y2, x1, y2);
-    orth_line(c, x2, y2, x2, y1);
+pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+    orth_line(c, x1, y1, x1, y2)?;
+    orth_line(c, x1, y1, x2, y1)?;
+    orth_line(c, x2, y2, x1, y2)?;
+    orth_line(c, x2, y2, x2, y1)?;
+
+    Ok(())
 }
 
 /// Draw a box using ASCII box-drawing characters
 ///
 /// Attempting to draw boxes less than 2x2 will look terrible
-pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) {
-    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y1, x2-1, y1);
-    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y2, x2-1, y2);
-    orth_line(BoxDrawingChar::Vertical.into(), x1, y1+1, x1, y2-1);
-    orth_line(BoxDrawingChar::Vertical.into(), x2, y1+1, x2, y2-1);
+pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y1, x2-1, y1)?;
+    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y2, x2-1, y2)?;
+    orth_line(BoxDrawingChar::Vertical.into(), x1, y1+1, x1, y2-1)?;
+    orth_line(BoxDrawingChar::Vertical.into(), x2, y1+1, x2, y2-1)?;
 
     pixel(BoxDrawingChar::TopLeftCorner.into(), x1, y1);
     pixel(BoxDrawingChar::TopRightCorner.into(), x2, y1);
     pixel(BoxDrawingChar::BottomLeftCorner.into(), x1, y2);
     pixel(BoxDrawingChar::BottomRightCorner.into(), x2, y2);
+
+    Ok(())
 }
 
 /// Draw a filled rectangle onto the screen
-pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
+pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     let mut y = y1;
     while y != y2 {
-        orth_line(c, x1, y, x2, y);
+        orth_line(c, x1, y, x2, y)?;
         y += 1;
     }
+
+    Ok(())
 }
 
 /// Draw a triangle onto the screen
-pub fn triangle(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
-    line(c, x1, y1, x2, y2);
-    line(c, x1, y1, x3, y3);
-    line(c, x3, y3, x2, y2);
+pub fn triangle(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) -> Result<(), &'static str> {
+    line(c, x1, y1, x2, y2)?;
+    line(c, x1, y1, x3, y3)?;
+    line(c, x3, y3, x2, y2)
 }
 
 /// Draw a filled triangle onto the screen
@@ -451,4 +463,30 @@ impl InputField {
             }
         }
     }
+}
+
+#[cfg(feature = "input")]
+pub struct InputManager {
+    input: Term,
+}
+
+#[cfg(feature = "input")]
+impl InputManager {
+    pub fn new() -> Self {
+        Self { input: Term::buffered_stdout() }
+    }
+
+    pub fn poll(&self) -> Option<Key> {
+        self.input.read_key().ok()
+    }
+
+    // TODO: add when console::Key implements Hash (pr pending)
+    // pub fn keys(&self) -> HashSet<Key> {
+    //     let mut keys = HashSet::new();
+    //     while let Some(key) = self.poll() {
+    //         keys.insert(key);
+    //     }
+
+    //     keys
+    // }
 }
