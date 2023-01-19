@@ -8,7 +8,7 @@ use {
 };
 
 #[cfg(feature = "input")]
-use console::Key;
+pub use console::Key;
 
 #[allow(unused)]
 enum BoxDrawingChar {
