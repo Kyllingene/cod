@@ -3,9 +3,12 @@ use std::io::{stdout, Write};
 
 #[cfg(feature = "input")]
 use {
-    console::{Key, Term},
+    console::Term,
     // std::collections::HashSet,
 };
+
+#[cfg(feature = "input")]
+use console::Key;
 
 #[allow(unused)]
 enum BoxDrawingChar {
