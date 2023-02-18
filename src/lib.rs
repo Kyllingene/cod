@@ -2,10 +2,7 @@ use std::cmp::{max, min};
 use std::io::{stdout, Write};
 
 #[cfg(feature = "input")]
-use {
-    console::Term,
-    // std::collections::HashSet,
-};
+use console::Term;
 
 #[cfg(feature = "input")]
 pub use console::Key;
@@ -37,7 +34,7 @@ impl From<BoxDrawingChar> for char {
             BoxDrawingChar::TopRightCorner => '\u{2557}',
             BoxDrawingChar::BottomLeftCorner => '\u{255A}',
             BoxDrawingChar::BottomRightCorner => '\u{255D}',
-            
+
             BoxDrawingChar::TopT => '\u{2566}',
             BoxDrawingChar::LeftT => '\u{2560}',
             BoxDrawingChar::RightT => '\u{2563}',
@@ -217,10 +214,10 @@ pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static 
 ///
 /// Attempting to draw boxes less than 2x2 will look terrible
 pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
-    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y1, x2-1, y1)?;
-    orth_line(BoxDrawingChar::Horizontal.into(), x1+1, y2, x2-1, y2)?;
-    orth_line(BoxDrawingChar::Vertical.into(), x1, y1+1, x1, y2-1)?;
-    orth_line(BoxDrawingChar::Vertical.into(), x2, y1+1, x2, y2-1)?;
+    orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y1, x2 - 1, y1)?;
+    orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y2, x2 - 1, y2)?;
+    orth_line(BoxDrawingChar::Vertical.into(), x1, y1 + 1, x1, y2 - 1)?;
+    orth_line(BoxDrawingChar::Vertical.into(), x2, y1 + 1, x2, y2 - 1)?;
 
     pixel(BoxDrawingChar::TopLeftCorner.into(), x1, y1);
     pixel(BoxDrawingChar::TopRightCorner.into(), x2, y1);
@@ -242,7 +239,15 @@ pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'st
 }
 
 /// Draw a triangle onto the screen
-pub fn triangle(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) -> Result<(), &'static str> {
+pub fn triangle(
+    c: char,
+    x1: u32,
+    y1: u32,
+    x2: u32,
+    y2: u32,
+    x3: u32,
+    y3: u32,
+) -> Result<(), &'static str> {
     line(c, x1, y1, x2, y2)?;
     line(c, x1, y1, x3, y3)?;
     line(c, x3, y3, x2, y2)
@@ -315,13 +320,13 @@ impl InputField {
 
     /// Set the contents of the textbox
     /// Cursor is automatically set to the end
-    /// 
+    ///
     /// Returns false if the string is too large for the input box
     pub fn set(&mut self, new: String) -> bool {
         if self.length.is_some() && new.len() > self.length.unwrap() {
             return false;
         }
-        
+
         self.data = new;
         self.pos = self.data.len();
 
@@ -423,7 +428,6 @@ impl InputField {
         let stdout = Term::buffered_stdout();
 
         if let Ok(key) = stdout.read_key() {
-
             if key != Key::ArrowUp {
                 self.up_arrow = false;
             } else {
@@ -476,20 +480,21 @@ pub struct InputManager {
 #[cfg(feature = "input")]
 impl InputManager {
     pub fn new() -> Self {
-        Self { input: Term::buffered_stdout() }
+        Self {
+            input: Term::buffered_stdout(),
+        }
     }
 
     pub fn poll(&self) -> Option<Key> {
         self.input.read_key().ok()
     }
 
-    // TODO: add when console::Key implements Hash (pr pending)
-    // pub fn keys(&self) -> HashSet<Key> {
-    //     let mut keys = HashSet::new();
-    //     while let Some(key) = self.poll() {
-    //         keys.insert(key);
-    //     }
+    pub fn keys(&self) -> HashSet<Key> {
+        let mut keys = HashSet::new();
+        while let Some(key) = self.poll() {
+            keys.insert(key);
+        }
 
-    //     keys
-    // }
+        keys
+    }
 }
