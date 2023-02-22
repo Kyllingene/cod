@@ -2,7 +2,10 @@ use std::cmp::{max, min};
 use std::io::{stdout, Write};
 
 #[cfg(feature = "input")]
-use console::Term;
+use {
+    console::Term,
+    std::collections::HashSet,
+};
 
 #[cfg(feature = "input")]
 pub use console::Key;
