@@ -7,7 +7,6 @@ use console::Term;
 #[cfg(feature = "input")]
 pub use console::Key;
 
-#[allow(unused)]
 enum BoxDrawingChar {
     Horizontal,
     Vertical,
@@ -44,52 +43,52 @@ impl From<BoxDrawingChar> for char {
     }
 }
 
-/// Print an escape sequence
+/// Print an escape sequence.
 fn escape<T: std::fmt::Display>(code: T) {
     print!("{}[{}", 27 as char, code);
 }
 
-/// Set foreground color, using 24-bit true color (not supported on all terminals)
+/// Set foreground color, using 24-bit true color (not supported on all terminals).
 pub fn tc_color_fg(r: u8, g: u8, b: u8) {
     escape(format!("38;2;{r};{g};{b}"));
 }
 
-/// Set background color, using 24-bit true color (not supported on all terminals)
+/// Set background color, using 24-bit true color (not supported on all terminals).
 pub fn tc_color_bg(r: u8, g: u8, b: u8) {
     escape(format!("48;2;{r};{g};{b}"));
 }
 
-/// Set foreground color, using 8-bit color
+/// Set foreground color, using 8-bit color.
 pub fn color_fg(color: u8) {
     escape(format!("38;5;{color}m"));
 }
 
-/// Set background color, using 8-bit color
+/// Set background color, using 8-bit color.
 pub fn color_bg(color: u8) {
     escape(format!("48;5;{color}m"));
 }
 
-/// Remove all color modifiers
+/// Remove all color modifiers.
 pub fn decolor() {
     escape("0m");
 }
 
-/// Clear the screen (full clear, not scroll)
+/// Clear the screen (full clear, not scroll).
 pub fn clear() {
     print!("{}c", 27 as char);
 }
 
-/// Clear a portion of the screen
+/// Clear a portion of the screen.
 pub fn erase(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     rect(' ', x1, y1, x2, y2)
 }
 
-/// Draw a single character onto the screen
+/// Draw a single character onto the screen.
 pub fn pixel(c: char, x: u32, y: u32) {
     escape(format!("{};{}H{}", y + 1, x + 1, c));
 }
 
-/// Draw an orthogonal line to the screen
+/// Draw an orthogonal line to the screen.
 pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     if x1 != x2 && y1 != y2 {
         return Err("Cannot draw non-ortho lines with orth-line");
@@ -116,7 +115,7 @@ pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'st
     Ok(())
 }
 
-/// Draw a line onto the screen
+/// Draw a line onto the screen.
 pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     if x1 == x2 || y1 == y2 {
         orth_line(c, x1, x2, y1, y2)?;
@@ -170,7 +169,7 @@ pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static 
     Ok(())
 }
 
-/// Draw a "texture" onto the screen
+/// Draw a "texture" onto the screen.
 pub fn blit(src: &Vec<Vec<char>>, sx: u32, sy: u32) {
     let mut x = sx;
     let mut y = sy;
@@ -184,7 +183,7 @@ pub fn blit(src: &Vec<Vec<char>>, sx: u32, sy: u32) {
     }
 }
 
-/// Draw a "texture" onto the screen
+/// Draw a "texture" onto the screen.
 pub fn blit_str(src: &String, x: u32, y: u32) {
     let split = String::from(src)
         .split('\n')
@@ -194,13 +193,13 @@ pub fn blit_str(src: &String, x: u32, y: u32) {
     blit(&split, x, y);
 }
 
-/// Draw a "texture" onto the screen
+/// Draw a "texture" onto the screen.
 pub fn blit_vstrs(src: &[String], x: u32, y: u32) {
     let vec = src.iter().map(|s| s.chars()).map(|c| c.collect()).collect();
     blit(&vec, x, y);
 }
 
-/// Draw a rectangle onto the screen
+/// Draw a rectangle onto the screen.
 pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     orth_line(c, x1, y1, x1, y2)?;
     orth_line(c, x1, y1, x2, y1)?;
@@ -210,9 +209,46 @@ pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static 
     Ok(())
 }
 
-/// Draw a box using ASCII box-drawing characters
+/// Print text using ASCII box-drawing characters.
+/// 
+/// Substitutions:
+/// r - y - 7    ╔ ═ ╦ ═ ╗
+/// |   |   |    ║   ║   ║
+/// p - + - d    ╠ ═ ╬ ═ ╣
+/// |   |   |    ║   ║   ║
+/// l - t - j    ╚ ═ ╩ ═ ╝      
 ///
-/// Attempting to draw boxes less than 2x2 will look terrible
+/// Putting a backslash before a character (e.g. "\\r" or "\\\") will escape it.
+pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, mut x: u32, y: u32) {
+    let mut escaped = false;
+    for c in s {
+        if escaped {
+            pixel(c, x, y);
+            x += 1;
+            escaped = false;
+        }
+
+        match c {
+            '\\' => escaped = true,
+
+            'r' => pixel(BoxDrawingChar::TopLeftCorner.into(), x, y),
+            '-' => pixel(BoxDrawingChar::Horizontal.into(), x, y),
+            'y' => pixel(BoxDrawingChar::TopT.into(), x, y),
+            '|' => pixel(BoxDrawingChar::Vertical.into(), x, y),
+            'p' => pixel(BoxDrawingChar::LeftT.into(), x, y),
+            '+' => pixel(BoxDrawingChar::MiddleT.into(), x, y),
+            'd' => pixel(BoxDrawingChar::RightT.into(), x, y),
+            'l' => pixel(BoxDrawingChar::BottomLeftCorner.into(), x, y),
+            't' => pixel(BoxDrawingChar::BottomT.into(), x, y),
+            'j' => pixel(BoxDrawingChar::BottomRightCorner.into(), x, y),
+
+            _ => pixel(c, x, y),
+        }
+        x += 1;
+    }
+}
+
+/// Draw a box using ASCII box-drawing characters.
 pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y1, x2 - 1, y1)?;
     orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y2, x2 - 1, y2)?;
@@ -227,7 +263,7 @@ pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str>
     Ok(())
 }
 
-/// Draw a filled rectangle onto the screen
+/// Draw a filled rectangle onto the screen.
 pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
     let mut y = y1;
     while y != y2 {
@@ -238,7 +274,7 @@ pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'st
     Ok(())
 }
 
-/// Draw a triangle onto the screen
+/// Draw a triangle onto the screen.
 pub fn triangle(
     c: char,
     x1: u32,
@@ -253,12 +289,12 @@ pub fn triangle(
     line(c, x3, y3, x2, y2)
 }
 
-/// Draw a filled triangle onto the screen
+/// Draw a filled triangle onto the screen.
 pub fn triangle_fill(_c: char, _x1: u32, _y1: u32, _x2: u32, _y2: u32, _x3: u32, _y3: u32) {
     todo!();
 }
 
-/// Draw text onto the screen (non-wrapping)
+/// Draw text onto the screen (non-wrapping).
 pub fn text<T: IntoIterator<Item = char>>(s: T, mut x: u32, y: u32) {
     for c in s {
         pixel(c, x, y);
@@ -266,27 +302,27 @@ pub fn text<T: IntoIterator<Item = char>>(s: T, mut x: u32, y: u32) {
     }
 }
 
-/// Set cursor to position
+/// Set cursor to position.
 pub fn goto(x: u32, y: u32) {
     escape(format!("{};{}H", y + 1, x + 1));
 }
 
-/// Put cursor to top of screen
+/// Put cursor to top of screen.
 pub fn home() {
     goto(1, 1);
 }
 
-/// Put cursor to the bottom of the screen
+/// Put cursor to the bottom of the screen.
 pub fn bot() {
     goto(0, 9998);
 }
 
-/// Flush everything you've drawn to stdout
+/// Flush everything you've drawn to stdout.
 pub fn flush() {
     stdout().flush().unwrap();
 }
 
-/// Pause for a certain amount of seconds
+/// A single-line textbox.
 #[cfg(feature = "input")]
 pub struct InputField {
     length: Option<usize>,
@@ -300,7 +336,7 @@ pub struct InputField {
 
 #[cfg(feature = "input")]
 impl InputField {
-    /// Creates a new textbox with a given (or no) length
+    /// Creates a new textbox with a given (or no) length.
     pub fn new(length: Option<usize>) -> Self {
         Self {
             length,
@@ -313,15 +349,15 @@ impl InputField {
         }
     }
 
-    /// Get the contents of the textbox
+    /// Get the contents of the textbox.
     pub fn get(&self) -> String {
         self.data.clone()
     }
 
-    /// Set the contents of the textbox
-    /// Cursor is automatically set to the end
+    /// Set the contents of the textbox.
+    /// Cursor is automatically set to the end.
     ///
-    /// Returns false if the string is too large for the input box
+    /// Returns false if the string is too large for the input box.
     pub fn set(&mut self, new: String) -> bool {
         if self.length.is_some() && new.len() > self.length.unwrap() {
             return false;
@@ -333,13 +369,13 @@ impl InputField {
         true
     }
 
-    /// Clears the contents of the textbox
+    /// Clears the contents of the textbox.
     pub fn clear(&mut self) {
         self.data.clear();
         self.pos = 0;
     }
 
-    /// Draw the contents of the textbox
+    /// Draw the contents of the textbox.
     pub fn draw(&self, mut x: u32, y: u32) {
         decolor();
         for (i, ch) in self.data.chars().enumerate() {
@@ -362,10 +398,10 @@ impl InputField {
         }
     }
 
-    /// Collects input until it recieves a newline
+    /// Collects input until it recieves a newline.
     ///
-    /// NOTE: WILL overwrite any characters drawn in its path
-    /// NOTE: WILL overwrite one character past the end (it has to do with the cursor, it's unfixable :/)
+    /// NOTE: WILL overwrite any characters drawn in its path.
+    /// NOTE: WILL overwrite one character past the end (it has to do with the cursor, it's unfixable :/).
     pub fn get_line(&mut self, x: u32, y: u32) {
         let stdout = Term::buffered_stdout();
         let _ = stdout.hide_cursor();
@@ -411,7 +447,7 @@ impl InputField {
         let _ = stdout.show_cursor();
     }
 
-    /// Add a character to the textbox; if the textbox is full, returns false
+    /// Add a character to the textbox; if the textbox is full, returns false.
     pub fn ch(&mut self, c: char) -> bool {
         if self.data.len() >= self.length.unwrap_or(usize::MAX) {
             return false;
@@ -423,7 +459,7 @@ impl InputField {
         true
     }
 
-    /// Tries to read a single key; non-blocking
+    /// Tries to read a single key; non-blocking.
     pub fn poll(&mut self) {
         let stdout = Term::buffered_stdout();
 
