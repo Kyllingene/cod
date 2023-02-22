@@ -1,6 +1,6 @@
 [package]
 name = "cod"
-version = "4.0.3"
+version = "4.0.4"
 edition = "2021"
 
 description = "A mini terminal drawing utility."
@@ -21,4 +21,4 @@ name = "cod"
 path = "src/lib.rs"
 
 [features]
-input = ["console"]
+input = ["dep:console"]
