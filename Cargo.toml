@@ -14,7 +14,7 @@ categories = ["command-line-interface"]
 keywords = ["tui", "terminal", "command-line"]
 
 [dependencies]
-console = { git = "https://github.com/console-rs/console", rev = "572e9a5f24b1142338d8133bc571b22093339f72", optional = true }
+console = { version = "0.15", optional = true }
 
 [lib]
 name = "cod"
