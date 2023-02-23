@@ -537,12 +537,13 @@ impl InputManager {
         self.input.read_key().ok()
     }
 
-    pub fn keys(&self) -> HashSet<Key> {
-        let mut keys = HashSet::new();
-        while let Some(key) = self.poll() {
-            keys.insert(key);
-        }
+    // TODO: doesn't work
+    // pub fn keys(&self) -> HashSet<Key> {
+    //     let mut keys = HashSet::new();
+    //     while let Some(key) = self.poll() {
+    //         keys.insert(key);
+    //     }
 
-        keys
-    }
+    //     keys
+    // }
 }
