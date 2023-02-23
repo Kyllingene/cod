@@ -2,10 +2,7 @@ use std::cmp::{max, min};
 use std::io::{stdout, Write};
 
 #[cfg(feature = "input")]
-use {
-    console::Term,
-    // std::collections::HashSet,
-};
+use console::Term;
 
 #[cfg(feature = "input")]
 pub use console::Key;
@@ -222,32 +219,38 @@ pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static 
 /// l - t - j    ╚ ═ ╩ ═ ╝      
 ///
 /// Putting a backslash before a character (e.g. "\\r" or "\\\") will escape it.
-pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, mut x: u32, y: u32) {
+pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
     let mut escaped = false;
+    let mut nx = x;
     for c in s {
         if escaped {
             pixel(c, x, y);
-            x += 1;
+            nx += 1;
             escaped = false;
+            continue
         }
 
         match c {
             '\\' => escaped = true,
+            '\n' => {
+                nx = x;
+                y += 1;
+            }
 
-            'r' => pixel(BoxDrawingChar::TopLeftCorner.into(), x, y),
-            '-' => pixel(BoxDrawingChar::Horizontal.into(), x, y),
-            'y' => pixel(BoxDrawingChar::TopT.into(), x, y),
-            '|' => pixel(BoxDrawingChar::Vertical.into(), x, y),
-            'p' => pixel(BoxDrawingChar::LeftT.into(), x, y),
-            '+' => pixel(BoxDrawingChar::MiddleT.into(), x, y),
-            'd' => pixel(BoxDrawingChar::RightT.into(), x, y),
-            'l' => pixel(BoxDrawingChar::BottomLeftCorner.into(), x, y),
-            't' => pixel(BoxDrawingChar::BottomT.into(), x, y),
-            'j' => pixel(BoxDrawingChar::BottomRightCorner.into(), x, y),
+            'r' => pixel(BoxDrawingChar::TopLeftCorner.into(), nx, y),
+            '-' => pixel(BoxDrawingChar::Horizontal.into(), nx, y),
+            'y' => pixel(BoxDrawingChar::TopT.into(), nx, y),
+            '|' => pixel(BoxDrawingChar::Vertical.into(), nx, y),
+            'p' => pixel(BoxDrawingChar::LeftT.into(), nx, y),
+            '+' => pixel(BoxDrawingChar::MiddleT.into(), nx, y),
+            'd' => pixel(BoxDrawingChar::RightT.into(), nx, y),
+            'l' => pixel(BoxDrawingChar::BottomLeftCorner.into(), nx, y),
+            't' => pixel(BoxDrawingChar::BottomT.into(), nx, y),
+            'j' => pixel(BoxDrawingChar::BottomRightCorner.into(), nx, y),
 
-            _ => pixel(c, x, y),
+            _ => pixel(c, nx, y),
         }
-        x += 1;
+        nx += 1;
     }
 }
 
@@ -297,11 +300,17 @@ pub fn triangle_fill(_c: char, _x1: u32, _y1: u32, _x2: u32, _y2: u32, _x3: u32,
     todo!();
 }
 
-/// Draw text onto the screen (non-wrapping).
-pub fn text<T: IntoIterator<Item = char>>(s: T, mut x: u32, y: u32) {
+/// Draw text onto the screen (non-wrapping, but respects linebreaks).
+pub fn text<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
+    let mut nx = x;
     for c in s {
-        pixel(c, x, y);
-        x += 1;
+        if c == '\n' {
+            nx = x;
+            y += 1;
+        }
+
+        pixel(c, nx, y);
+        nx += 1;
     }
 }
 
@@ -528,13 +537,12 @@ impl InputManager {
         self.input.read_key().ok()
     }
 
-    // TODO: wait for crates.io release to update
-    // pub fn keys(&self) -> HashSet<Key> {
-    //     let mut keys = HashSet::new();
-    //     while let Some(key) = self.poll() {
-    //         keys.insert(key);
-    //     }
+    pub fn keys(&self) -> HashSet<Key> {
+        let mut keys = HashSet::new();
+        while let Some(key) = self.poll() {
+            keys.insert(key);
+        }
 
-    //     keys
-    // }
+        keys
+    }
 }
