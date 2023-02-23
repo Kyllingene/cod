@@ -235,6 +235,7 @@ pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
             '\n' => {
                 nx = x;
                 y += 1;
+                continue;
             }
 
             'r' => pixel(BoxDrawingChar::TopLeftCorner.into(), nx, y),
