@@ -1,3 +1,6 @@
+# **Breaking change! Added a `struct` feature to support setting output**
+# **The old functional api is still available, disable the `struct` feature**
+
 # cod
 #### COnsole Drawer
 
