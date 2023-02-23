@@ -240,6 +240,7 @@ pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
             'r' => pixel(BoxDrawingChar::TopLeftCorner.into(), nx, y),
             '-' => pixel(BoxDrawingChar::Horizontal.into(), nx, y),
             'y' => pixel(BoxDrawingChar::TopT.into(), nx, y),
+            '7' => pixel(BoxDrawingChar::TopRightCorner.into(), nx, y),
             '|' => pixel(BoxDrawingChar::Vertical.into(), nx, y),
             'p' => pixel(BoxDrawingChar::LeftT.into(), nx, y),
             '+' => pixel(BoxDrawingChar::MiddleT.into(), nx, y),
