@@ -535,6 +535,8 @@ mod func {
 
 #[cfg(feature = "struct")]
 mod obj {
+    use std::io::BufWriter;
+
     use crate::*;
 
     pub struct Drawer {
@@ -554,7 +556,7 @@ mod obj {
         }
 
         pub fn from<W: Write + 'static>(out: W) -> Self {
-            Self{ out: Box::new(out) }
+            Self{ out: Box::new(BufWriter::new(out)) }
         }
 
         /// Print an escape sequence.
