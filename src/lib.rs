@@ -11,9 +11,6 @@ use std::io::{stdout, Write};
 #[cfg(feature = "input")]
 pub use console::Key;
 
-#[cfg(feature = "input")]
-use console::Term;
-
 mod line;
 use line::LineIter;
 
@@ -350,6 +347,8 @@ pub fn flush() {
 /// Utilities for reading from stdin.
 #[cfg(feature = "input")]
 pub mod read {
+    use console::{Key, Term};
+
     /// Read a single key from stdin.
     pub fn key() -> Option<Key> {
         let term = Term::stdout();
