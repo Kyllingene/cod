@@ -332,6 +332,14 @@ pub mod style {
     pub fn strike() {
         escape("9m");
     }
+
+    /// Disable all style attributes.
+    pub fn de() {
+        escape("22");
+        escape("23");
+        escape("24");
+        escape("29");
+    }
 }
 
 /// Flush to stdout.
