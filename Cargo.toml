@@ -1,6 +1,6 @@
 [package]
 name = "cod"
-version = "6.0.0"
+version = "6.0.1"
 edition = "2021"
 
 description = "A mini, functional terminal drawing utility."
