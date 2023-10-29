@@ -1,4 +1,11 @@
-use std::cmp::{max, min};
+//! A utility for command-line drawing.
+//!
+//! Many utilities are at the top-level; however, there are a couple of modules:
+//!  - [`clear`]: Functions for clearing the screen or sections thereof.
+//!  - [`color`]: Functions for setting the foreground/background color.
+//!  - [`goto`]: Functions for moving the cursor around the screen.
+//!  - [`read`]: Functions for reading from stdin. Must specify feature `input` to use.
+
 use std::io::{stdout, Write};
 
 #[cfg(feature = "input")]
@@ -111,17 +118,17 @@ pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodE
     }
 
     if x1 != x2 {
-        let mut x = min(x1, x2);
+        let mut x = x1.min(x2);
 
-        while x != max(x1, x2) + 1 {
+        while x != x1.max(x2) + 1 {
             pixel(c, x, y1);
 
             x += 1;
         }
     } else {
-        let mut y = min(y1, y2);
+        let mut y = y1.min(y2);
 
-        while y != max(y1, y2) + 1 {
+        while y != y1.max(y2) + 1 {
             pixel(c, x1, y);
 
             y += 1;
