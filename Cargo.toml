@@ -21,7 +21,5 @@ name = "cod"
 path = "src/lib.rs"
 
 [features]
-default = ["struct"]
-struct = []
-
+default = []
 input = ["dep:console"]
