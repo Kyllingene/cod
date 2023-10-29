@@ -210,7 +210,7 @@ pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static 
 }
 
 /// Print text using ASCII box-drawing characters.
-/// 
+///
 /// Substitutions:
 /// r - y - 7    ╔ ═ ╦ ═ ╗
 /// |   |   |    ║   ║   ║
@@ -227,7 +227,7 @@ pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
             pixel(c, x, y);
             nx += 1;
             escaped = false;
-            continue
+            continue;
         }
 
         match c {
@@ -349,4 +349,3 @@ pub fn read_line() -> Option<String> {
     let term = Term::stdout();
     term.read_line().ok()
 }
-
