@@ -3,7 +3,7 @@ name = "cod"
 version = "6.0.0"
 edition = "2021"
 
-description = "A mini terminal drawing utility."
+description = "A mini, functional terminal drawing utility."
 authors = ["Kyllingene"]
 license = "MIT"
 

@@ -7,6 +7,14 @@ pub use console::Key;
 #[cfg(feature = "input")]
 use console::Term;
 
+mod line;
+use line::LineIter;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CodError {
+    InvalidOrthoLine(u32, u32, u32, u32),
+}
+
 enum BoxDrawingChar {
     Horizontal,
     Vertical,
@@ -48,39 +56,47 @@ fn escape<T: std::fmt::Display>(code: T) {
     print!("{}[{}", 27 as char, code);
 }
 
-/// Set foreground color, using 24-bit true color (not supported on all terminals).
-pub fn tc_color_fg(r: u8, g: u8, b: u8) {
-    escape(format!("38;2;{r};{g};{b}"));
+/// Utilities for setting and resetting color.
+pub mod color {
+    use crate::escape;
+
+    /// Set foreground color, using 24-bit true color (not supported on all terminals).
+    pub fn tc_fg(r: u8, g: u8, b: u8) {
+        escape(format!("38;2;{r};{g};{b}m"));
+    }
+
+    /// Set background color, using 24-bit true color (not supported on all terminals).
+    pub fn tc_bg(r: u8, g: u8, b: u8) {
+        escape(format!("48;2;{r};{g};{b}m"));
+    }
+
+    /// Set foreground color, using 8-bit color.
+    pub fn fg(color: u8) {
+        escape(format!("38;5;{color}m"));
+    }
+
+    /// Set background color, using 8-bit color.
+    pub fn bg(color: u8) {
+        escape(format!("48;5;{color}m"));
+    }
+
+    /// Remove all color modifiers.
+    pub fn de() {
+        escape("0m");
+    }
 }
 
-/// Set background color, using 24-bit true color (not supported on all terminals).
-pub fn tc_color_bg(r: u8, g: u8, b: u8) {
-    escape(format!("48;2;{r};{g};{b}"));
-}
+/// Utilities for clearing the screen.
+pub mod clear {
+    /// Clear the screen (full clear, not scroll).
+    pub fn all() {
+        print!("{}c", 27 as char);
+    }
 
-/// Set foreground color, using 8-bit color.
-pub fn color_fg(color: u8) {
-    escape(format!("38;5;{color}m"));
-}
-
-/// Set background color, using 8-bit color.
-pub fn color_bg(color: u8) {
-    escape(format!("48;5;{color}m"));
-}
-
-/// Remove all color modifiers.
-pub fn decolor() {
-    escape("0m");
-}
-
-/// Clear the screen (full clear, not scroll).
-pub fn clear() {
-    print!("{}c", 27 as char);
-}
-
-/// Clear a portion of the screen.
-pub fn erase(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
-    rect(' ', x1, y1, x2, y2)
+    /// Clear a portion of the screen.
+    pub fn rect(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), crate::CodError> {
+        crate::rect(' ', x1, y1, x2, y2)
+    }
 }
 
 /// Draw a single character onto the screen.
@@ -89,9 +105,9 @@ pub fn pixel(c: char, x: u32, y: u32) {
 }
 
 /// Draw an orthogonal line to the screen.
-pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
     if x1 != x2 && y1 != y2 {
-        return Err("Cannot draw non-ortho lines with orth-line");
+        return Err(CodError::InvalidOrthoLine(x1, y1, x2, y2));
     }
 
     if x1 != x2 {
@@ -116,91 +132,35 @@ pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'st
 }
 
 /// Draw a line onto the screen.
-pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
     if x1 == x2 || y1 == y2 {
-        orth_line(c, x1, x2, y1, y2)?;
-        return Ok(());
+        orth_line(c, x1, x2, y1, y2).unwrap();
+        return;
     }
 
-    let mut dx: i32 = (x2 - x1) as i32;
-    let mut dy: i32 = (y2 - y1) as i32;
-
-    let sx = if x2 - x1 > 0 { 1 } else { -1 };
-    let sy = if y2 - y1 > 0 { 1 } else { -1 };
-
-    let xx;
-    let xy;
-    let yx;
-    let yy;
-    if dx > dy {
-        xx = sx;
-        xy = 0i32;
-        yx = 0i32;
-        yy = sy;
-    } else {
-        std::mem::swap(&mut dx, &mut dy);
-        xx = 0i32;
-        xy = sy;
-        yx = sx;
-        yy = 0i32;
+    for (x, y) in LineIter::new(x1, y1, x2, y2) {
+        pixel(c, x, y);
     }
-
-    let mut err = (dy << 1) - dx;
-
-    let mut x = 0;
-    let mut y = 0;
-
-    while x <= dx {
-        pixel(
-            c,
-            ((x1 as i32) + x * xx + y * yx) as u32,
-            ((y1 as i32) + x * xy + y * yy) as u32,
-        );
-
-        if err >= 0 {
-            y += 1;
-            err -= dx << 1;
-        }
-
-        err += dy << 1;
-        x += 1;
-    }
-
-    Ok(())
 }
 
 /// Draw a "texture" onto the screen.
-pub fn blit(src: &Vec<Vec<char>>, sx: u32, sy: u32) {
-    let mut x = sx;
-    let mut y = sy;
-    for row in src {
+pub fn blit<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
+    let src = src.as_ref();
+    let rows = src.split('\n').map(|s| s.chars());
+
+    let ox = x;
+    for row in rows {
         for c in row {
-            pixel(*c, x, y);
+            pixel(c, x, y);
             x += 1;
         }
-        x = sx;
+        x = ox;
         y += 1;
     }
 }
 
-/// Draw a "texture" onto the screen.
-pub fn blit_str(src: &String, x: u32, y: u32) {
-    let split = String::from(src)
-        .split('\n')
-        .map(|s| s.chars())
-        .map(|c| c.collect())
-        .collect();
-    blit(&split, x, y);
-}
-
-/// Draw a "texture" onto the screen.
-pub fn blit_vstrs(src: &[String], x: u32, y: u32) {
-    let vec = src.iter().map(|s| s.chars()).map(|c| c.collect()).collect();
-    blit(&vec, x, y);
-}
-
 /// Draw a rectangle onto the screen.
-pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
     orth_line(c, x1, y1, x1, y2)?;
     orth_line(c, x1, y1, x2, y1)?;
     orth_line(c, x2, y2, x1, y2)?;
@@ -218,7 +178,7 @@ pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static 
 /// |   |   |    ║   ║   ║
 /// l - t - j    ╚ ═ ╩ ═ ╝      
 ///
-/// Putting a backslash before a character (e.g. "\\r" or "\\\") will escape it.
+/// Putting a backslash before a character (e.g. "\\r" or "\\\\") will escape it.
 pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
     let mut escaped = false;
     let mut nx = x;
@@ -257,7 +217,7 @@ pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
 }
 
 /// Draw a box using ASCII box-drawing characters.
-pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
     orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y1, x2 - 1, y1)?;
     orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y2, x2 - 1, y2)?;
     orth_line(BoxDrawingChar::Vertical.into(), x1, y1 + 1, x1, y2 - 1)?;
@@ -272,7 +232,7 @@ pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str>
 }
 
 /// Draw a filled rectangle onto the screen.
-pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'static str> {
+pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
     let mut y = y1;
     while y != y2 {
         orth_line(c, x1, y, x2, y)?;
@@ -283,69 +243,67 @@ pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), &'st
 }
 
 /// Draw a triangle onto the screen.
-pub fn triangle(
-    c: char,
-    x1: u32,
-    y1: u32,
-    x2: u32,
-    y2: u32,
-    x3: u32,
-    y3: u32,
-) -> Result<(), &'static str> {
-    line(c, x1, y1, x2, y2)?;
-    line(c, x1, y1, x3, y3)?;
-    line(c, x3, y3, x2, y2)
+pub fn triangle(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
+    line(c, x1, y1, x2, y2);
+    line(c, x2, y2, x3, y3);
+    line(c, x1, y1, x3, y3);
 }
 
-/// Draw a filled triangle onto the screen.
-pub fn triangle_fill(_c: char, _x1: u32, _y1: u32, _x2: u32, _y2: u32, _x3: u32, _y3: u32) {
-    todo!();
-}
+// /// Draw a filled triangle onto the screen.
+// pub fn triangle_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
+//     todo!()
+// }
 
 /// Draw text onto the screen (non-wrapping, but respects linebreaks).
-pub fn text<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
+pub fn text<S: AsRef<str>>(s: S, x: u32, mut y: u32) {
+    let chars = s.as_ref().chars();
     let mut nx = x;
-    for c in s {
-        if c == '\n' {
+    for ch in chars {
+        if ch == '\n' {
             nx = x;
             y += 1;
         }
 
-        pixel(c, nx, y);
+        pixel(ch, nx, y);
         nx += 1;
     }
 }
 
-/// Set cursor to position.
-pub fn goto(x: u32, y: u32) {
-    escape(format!("{};{}H", y + 1, x + 1));
-}
+/// Utilities for moving the cursor.
+pub mod goto {
+    /// Set cursor to a specific position.
+    pub fn pos(x: u32, y: u32) {
+        crate::escape(format!("{};{}H", y + 1, x + 1));
+    }
 
-/// Put cursor to top of screen.
-pub fn home() {
-    goto(1, 1);
-}
+    /// Move the cursor to the top of screen.
+    pub fn home() {
+        pos(1, 1);
+    }
 
-/// Put cursor to the bottom of the screen.
-pub fn bot() {
-    goto(0, 9998);
+    /// Move the cursor to the bottom of the screen.
+    pub fn bot() {
+        pos(0, 9998);
+    }
 }
 
 /// Flush to stdout.
 pub fn flush() {
-    stdout().flush().unwrap();
+    stdout().flush().expect("Failed to flush stdout");
 }
 
-/// Read a single key from stdin.
+/// Utilities for reading from stdin.
 #[cfg(feature = "input")]
-pub fn read_key() -> Option<Key> {
-    let term = Term::stdout();
-    term.read_key().ok()
-}
+pub mod read {
+    /// Read a single key from stdin.
+    pub fn key() -> Option<Key> {
+        let term = Term::stdout();
+        term.read_key().ok()
+    }
 
-/// Read a line from stdin.
-#[cfg(feature = "input")]
-pub fn read_line() -> Option<String> {
-    let term = Term::stdout();
-    term.read_line().ok()
+    /// Read a line from stdin.
+    pub fn line() -> Option<String> {
+        let term = Term::stdout();
+        term.read_line().ok()
+    }
 }
