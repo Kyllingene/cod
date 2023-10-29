@@ -87,6 +87,16 @@ pub mod color {
         escape(format!("48;5;{color}m"));
     }
 
+    /// Reset foreground color.
+    pub fn de_fg() {
+        escape("39m");
+    }
+
+    /// Reset background color.
+    pub fn de_bg() {
+        escape("49m");
+    }
+
     /// Remove all color modifiers.
     pub fn de() {
         escape("0m");
@@ -291,6 +301,36 @@ pub mod goto {
     /// Move the cursor to the bottom of the screen.
     pub fn bot() {
         pos(0, 9998);
+    }
+}
+
+/// Utilities for modifying the look of the text.
+pub mod style {
+    use crate::escape;
+
+    /// Enable bold.
+    pub fn bold() {
+        escape("1m");
+    }
+
+    /// Enable faint.
+    pub fn faint() {
+        escape("4m");
+    }
+
+    /// Enable italics.
+    pub fn italic() {
+        escape("3m");
+    }
+
+    /// Enable underline.
+    pub fn underline() {
+        escape("4m");
+    }
+
+    /// Enable strikethrough.
+    pub fn strike() {
+        escape("9m");
     }
 }
 
