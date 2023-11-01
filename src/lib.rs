@@ -180,6 +180,27 @@ pub fn blit<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
     }
 }
 
+/// Draw a "texture" onto the screen, skipping spaces.
+/// If you need to fill a blank, use a tab (`\t`) character.
+pub fn blit_transparent<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
+    let src = src.as_ref();
+    let rows = src.split('\n').map(|s| s.chars());
+
+    let ox = x;
+    for row in rows {
+        for c in row {
+            match c {
+                ' ' => goto::right(1),
+                '\t' => pixel(' ', x, y),
+                _ => pixel(c, x, y),
+            }
+            x += 1;
+        }
+        x = ox;
+        y += 1;
+    }
+}
+
 /// Draw a rectangle onto the screen.
 pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
     orth_line(c, x1, y1, x1, y2)?;
