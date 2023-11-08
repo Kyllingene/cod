@@ -221,9 +221,9 @@ pub struct BoxChars {
 
 /// Draw a rectangle using a set of characters.
 pub fn rect_lines(chars: BoxChars, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
-    orth_line(chars.horizontal, x1, y1, x1, y2)?;
     orth_line(chars.horizontal, x1, y1, x2, y1)?;
-    orth_line(chars.vertical, x1, y2, x2, y2)?;
+    orth_line(chars.horizontal, x1, y2, x2, y2)?;
+    orth_line(chars.vertical, x1, y1, x1, y2)?;
     orth_line(chars.vertical, x2, y1, x2, y2)?;
     pixel(chars.corner, x1, y1);
     pixel(chars.corner, x1, y2);
