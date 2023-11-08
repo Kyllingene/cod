@@ -214,27 +214,21 @@ pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError>
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BoxChars {
-    pub left: char,
-    pub right: char,
-    pub top: char,
-    pub bot: char,
-
-    pub top_left: char,
-    pub bot_left: char,
-    pub top_right: char,
-    pub bot_right: char,
+    pub horizontal: char,
+    pub vertical: char,
+    pub corner: char,
 }
 
 /// Draw a rectangle using a set of characters.
 pub fn rect_lines(chars: BoxChars, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
-    orth_line(chars.left, x1, y1, x1, y2)?;
-    orth_line(chars.top, x1, y1, x2, y1)?;
-    orth_line(chars.bot, x1, y2, x2, y2)?;
-    orth_line(chars.right, x2, y1, x2, y2)?;
-    pixel(chars.top_left, x1, y1);
-    pixel(chars.bot_left, x1, y2);
-    pixel(chars.top_right, x2, y1);
-    pixel(chars.bot_right, x2, y2);
+    orth_line(chars.horizontal, x1, y1, x1, y2)?;
+    orth_line(chars.horizontal, x1, y1, x2, y1)?;
+    orth_line(chars.vertical, x1, y2, x2, y2)?;
+    orth_line(chars.vertical, x2, y1, x2, y2)?;
+    pixel(chars.corner, x1, y1);
+    pixel(chars.corner, x1, y2);
+    pixel(chars.corner, x2, y1);
+    pixel(chars.corner, x2, y2);
 
     Ok(())
 }
@@ -288,16 +282,17 @@ pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
 
 /// Draw a box using ASCII box-drawing characters.
 pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
-    rect_lines(BoxChars {
-        top: BoxDrawingChar::Horizontal.into(),
-        bot: BoxDrawingChar::Horizontal.into(),
-        left: BoxDrawingChar::Vertical.into(),
-        right: BoxDrawingChar::Vertical.into(),
-        top_left: BoxDrawingChar::TopLeftCorner.into(),
-        bot_left: BoxDrawingChar::BottomLeftCorner.into(),
-        top_right: BoxDrawingChar::TopRightCorner.into(),
-        bot_right: BoxDrawingChar::BottomRightCorner.into(),
-    }, x1, y1, x2, y2)
+    orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y1, x2 - 1, y1)?;
+    orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y2, x2 - 1, y2)?;
+    orth_line(BoxDrawingChar::Vertical.into(), x1, y1 + 1, x1, y2 - 1)?;
+    orth_line(BoxDrawingChar::Vertical.into(), x2, y1 + 1, x2, y2 - 1)?;
+
+    pixel(BoxDrawingChar::TopLeftCorner.into(), x1, y1);
+    pixel(BoxDrawingChar::TopRightCorner.into(), x2, y1);
+    pixel(BoxDrawingChar::BottomLeftCorner.into(), x1, y2);
+    pixel(BoxDrawingChar::BottomRightCorner.into(), x2, y2);
+
+    Ok(())
 }
 
 /// Draw a filled rectangle onto the screen.
