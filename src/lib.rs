@@ -460,7 +460,8 @@ pub fn flush() {
 #[cfg(feature = "framebuf")]
 pub fn flush() {
     let mut framebuf = FRAMEBUF.lock().unwrap();
-    stdout().write_all(framebuf.as_bytes()).unwrap();
+    stdout().write_all(framebuf.as_bytes()).expect("Failed to write to stdout");
+    stdout().flush().expect("Failed to flush stdout");
     framebuf.clear();
 }
 
