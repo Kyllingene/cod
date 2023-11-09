@@ -136,12 +136,12 @@ pub mod clear {
 
     /// Clear the screen (full clear, not scroll).
     pub fn all() {
-        escape("2J");
-
         #[cfg(feature = "framebuf")]
         {
             crate::FRAMEBUF.lock().unwrap().clear();
         }
+
+        escape("2J");
     }
 
     /// Clear the current line.
