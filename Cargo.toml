@@ -1,6 +1,6 @@
 [package]
 name = "cod"
-version = "6.1.5"
+version = "7.0.0"
 edition = "2021"
 
 description = "A mini, functional terminal drawing utility."
@@ -15,11 +15,13 @@ keywords = ["tui", "terminal", "command-line"]
 
 [dependencies]
 console = { version = "0.15", optional = true }
+lazy_static = { version = "1.4", optional = true }
 
 [lib]
 name = "cod"
 path = "src/lib.rs"
 
 [features]
-default = []
+default = ["framebuf"]
+framebuf = ["dep:lazy_static"]
 input = ["dep:console"]

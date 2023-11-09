@@ -11,8 +11,37 @@ use std::io::{stdout, Write};
 #[cfg(feature = "input")]
 pub use console::Key;
 
+#[cfg(feature = "framebuf")]
+use {
+    std::sync::{Arc, Mutex},
+    lazy_static::lazy_static,
+};
+
 mod line;
 use line::LineIter;
+
+#[cfg(feature = "framebuf")]
+lazy_static! {
+    static ref FRAMEBUF: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
+}
+
+#[cfg(feature = "framebuf")]
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => {{
+        FRAMEBUF.lock().unwrap().extend(&mut format!($($arg)*).chars());
+    }};
+}
+
+#[cfg(feature = "framebuf")]
+#[macro_export]
+macro_rules! println {
+    ($($arg:tt)*) => {{
+        let framebuf = framebuf.lock().unwrap();
+        framebuf.extend(&mut format!($($arg)*).chars());
+        framebuf.push('\n');
+    }};
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CodError {
@@ -424,8 +453,15 @@ pub mod style {
 }
 
 /// Flush to stdout.
+#[cfg(not(feature = "framebuf"))]
 pub fn flush() {
     stdout().flush().expect("Failed to flush stdout");
+}
+#[cfg(feature = "framebuf")]
+pub fn flush() {
+    let mut framebuf = FRAMEBUF.lock().unwrap();
+    stdout().write_all(framebuf.as_bytes()).unwrap();
+    framebuf.clear();
 }
 
 /// Utilities for reading from stdin.
