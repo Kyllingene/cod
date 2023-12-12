@@ -24,8 +24,8 @@ pub mod color;
 pub mod goto;
 pub mod guard;
 pub mod prelude;
-pub mod style;
 pub mod rect;
+pub mod style;
 
 mod line;
 
@@ -132,7 +132,6 @@ pub fn blit_transparent<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
         y += 1;
     }
 }
-
 
 /// Draw a triangle onto the screen.
 pub fn triangle(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {

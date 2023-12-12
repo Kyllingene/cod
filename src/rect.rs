@@ -1,6 +1,5 @@
 /// Utilities for drawing various rectangles and boxes.
-
-use crate::{NonOrthogonal, pixel, orth_line};
+use crate::{orth_line, pixel, NonOrthogonal};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BoxDrawingChar {
@@ -31,7 +30,6 @@ pub struct Chars {
     /// Corner pixels.
     pub corner: char,
 }
-
 
 impl From<BoxDrawingChar> for char {
     fn from(ch: BoxDrawingChar) -> char {
@@ -72,13 +70,7 @@ pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthog
 /// # Errors
 ///
 /// If the given line is non-orthogonal, returns an error.
-pub fn with(
-    chars: Chars,
-    x1: u32,
-    y1: u32,
-    x2: u32,
-    y2: u32,
-) -> Result<(), NonOrthogonal> {
+pub fn with(chars: Chars, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
     orth_line(chars.horizontal, x1, y1, x2, y1)?;
     orth_line(chars.horizontal, x1, y2, x2, y2)?;
     orth_line(chars.vertical, x1, y1, x1, y2)?;
