@@ -1,3 +1,5 @@
+//! The [`LineIter`] struct, for generating points on a line.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct LineIter {
     x: i32,

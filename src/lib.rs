@@ -3,16 +3,45 @@
 //! Many utilities are at the top-level; however, there are a couple of modules:
 //!  - [`clear`]: Functions for clearing the screen or sections thereof.
 //!  - [`color`]: Functions for setting the foreground/background color.
+//!  - [`style`]: Functions for styling text, i.e. bold, italic, underline.
 //!  - [`goto`]: Functions for moving the cursor around the screen.
 //!  - [`read`]: Functions for reading from stdin. Must specify feature `input` to use.
+//!
+//!  Both the `color` and `style` modules have three parts:
+//!     - The root, containing styling functions
+//!     - A `de` module, containing functions to reset styling
+//!     - A `with` module, containing functions to run code with certain styling
 
 use std::io::{stdout, Write};
 
+/// When the `input` feature is enabled, `console` becomes required. For convenience,
+/// it's also re-exported here.
+#[cfg(feature = "input")]
+pub use console;
 #[cfg(feature = "input")]
 pub use console::Key;
 
+/// Utilities for setting and resetting color.
+pub mod color;
+
+/// Utilities for clearing the screen.
+pub mod clear;
+
+/// Utilities for moving the cursor.
+pub mod goto;
+
+/// Utilities for modifying the look of the text.
+pub mod style;
+
+/// Imports everything you need in an ergonomic fashion.
+pub mod prelude;
+
 mod line;
 use line::LineIter;
+
+/// Utilities for reading from stdin.
+#[cfg(feature = "input")]
+pub mod read;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CodError {
@@ -60,64 +89,9 @@ fn escape<T: std::fmt::Display>(code: T) {
     print!("{}[{}", 27 as char, code);
 }
 
-/// Utilities for setting and resetting color.
-pub mod color {
-    use crate::escape;
-
-    /// Set foreground color, using 24-bit true color (not supported on all terminals).
-    pub fn tc_fg(r: u8, g: u8, b: u8) {
-        escape(format!("38;2;{r};{g};{b}m"));
-    }
-
-    /// Set background color, using 24-bit true color (not supported on all terminals).
-    pub fn tc_bg(r: u8, g: u8, b: u8) {
-        escape(format!("48;2;{r};{g};{b}m"));
-    }
-
-    /// Set foreground color, using 8-bit color.
-    pub fn fg(color: u8) {
-        escape(format!("38;5;{color}m"));
-    }
-
-    /// Set background color, using 8-bit color.
-    pub fn bg(color: u8) {
-        escape(format!("48;5;{color}m"));
-    }
-
-    /// Reset foreground color.
-    pub fn de_fg() {
-        escape("39m");
-    }
-
-    /// Reset background color.
-    pub fn de_bg() {
-        escape("49m");
-    }
-
-    /// Remove all color modifiers.
-    pub fn de() {
-        escape("0m");
-    }
-}
-
-/// Utilities for clearing the screen.
-pub mod clear {
-    use crate::escape;
-
-    /// Clear the screen (full clear, not scroll).
-    pub fn all() {
-        escape("2J");
-    }
-
-    /// Clear the current line.
-    pub fn line() {
-        escape("2K");
-    }
-
-    /// Clear a portion of the screen. *Note:* will clear using the current background color.
-    pub fn rect(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), crate::CodError> {
-        crate::rect(' ', x1, y1, x2, y2)
-    }
+/// Disable all style and color attributes.
+pub fn normal() {
+    escape("0m");
 }
 
 /// Draw a single character onto the screen.
@@ -291,6 +265,7 @@ pub fn triangle(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
     line(c, x1, y1, x3, y3);
 }
 
+// TODO: do this ever
 // /// Draw a filled triangle onto the screen.
 // pub fn triangle_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
 //     todo!()
@@ -311,115 +286,7 @@ pub fn text<S: AsRef<str>>(s: S, x: u32, mut y: u32) {
     }
 }
 
-/// Utilities for moving the cursor.
-pub mod goto {
-    use crate::escape;
-
-    /// Move the cursor up.
-    pub fn up(y: u32) {
-        if y == 0 {
-            return;
-        }
-        escape(format!("{y}A"));
-    }
-
-    /// Move the cursor down.
-    pub fn down(y: u32) {
-        if y == 0 {
-            return;
-        }
-        escape(format!("{y}B"));
-    }
-
-    /// Move the cursor left.
-    pub fn left(x: u32) {
-        if x == 0 {
-            return;
-        }
-        escape(format!("{x}D"));
-    }
-
-    /// Move the cursor right.
-    pub fn right(x: u32) {
-        if x == 0 {
-            return;
-        }
-        escape(format!("{x}C"));
-    }
-
-    /// Set cursor to a specific position.
-    pub fn pos(x: u32, y: u32) {
-        escape(format!("{};{}H", y + 1, x + 1));
-    }
-
-    /// Move the cursor to the top of screen.
-    pub fn home() {
-        pos(0, 0);
-    }
-
-    /// Move the cursor to the bottom of the screen.
-    pub fn bot() {
-        pos(0, 9998);
-    }
-}
-
-/// Utilities for modifying the look of the text.
-pub mod style {
-    use crate::escape;
-
-    /// Enable bold.
-    pub fn bold() {
-        escape("1m");
-    }
-
-    /// Enable faint.
-    pub fn faint() {
-        escape("4m");
-    }
-
-    /// Enable italics.
-    pub fn italic() {
-        escape("3m");
-    }
-
-    /// Enable underline.
-    pub fn underline() {
-        escape("4m");
-    }
-
-    /// Enable strikethrough.
-    pub fn strike() {
-        escape("9m");
-    }
-
-    /// Disable all style attributes.
-    pub fn de() {
-        escape("22");
-        escape("23");
-        escape("24");
-        escape("29");
-    }
-}
-
 /// Flush to stdout.
 pub fn flush() {
     stdout().flush().expect("Failed to flush stdout");
-}
-
-/// Utilities for reading from stdin.
-#[cfg(feature = "input")]
-pub mod read {
-    use console::{Key, Term};
-
-    /// Read a single key from stdin.
-    pub fn key() -> Option<Key> {
-        let term = Term::stdout();
-        term.read_key().ok()
-    }
-
-    /// Read a line from stdin.
-    pub fn line() -> Option<String> {
-        let term = Term::stdout();
-        term.read_line().ok()
-    }
 }
