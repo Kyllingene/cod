@@ -1,4 +1,4 @@
-/// Utilities for drawing various rectangles and boxes.
+//! Utilities for drawing various rectangles and boxes.
 use crate::{orth_line, pixel, NonOrthogonal};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
