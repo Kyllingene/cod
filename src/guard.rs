@@ -7,10 +7,9 @@
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Reset;
 
-impl std::ops::Drop for Reset{
+impl std::ops::Drop for Reset {
     fn drop(&mut self) {
         crate::style::de::all();
         crate::color::de::all();
     }
 }
-

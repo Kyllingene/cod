@@ -5,10 +5,11 @@
 //! - [`color`]
 //! - [`goto`]
 //! - [`guard`]
+//! - [`rect`]
 //! - [`style`]
 //! - [`read`] (with feature `input` enabled)
 
-pub use crate::{clear, color, goto, guard, style};
+pub use crate::{clear, color, goto, guard, rect, style};
 
 #[cfg(feature = "input")]
 pub use crate::read;

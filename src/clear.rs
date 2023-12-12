@@ -18,5 +18,5 @@ pub fn line() {
 ///
 /// If the rectangle was not orthogonal, returns `false`.
 pub fn rect(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
-    crate::rect(' ', x1, y1, x2, y2)
+    crate::rect::line(' ', x1, y1, x2, y2)
 }
