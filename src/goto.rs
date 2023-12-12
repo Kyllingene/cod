@@ -1,3 +1,5 @@
+//! Utilities for moving the cursor.
+
 use crate::escape;
 
 /// Move the cursor up.

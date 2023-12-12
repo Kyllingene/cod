@@ -1,13 +1,29 @@
-# cod - Command-line drawer
+# Cod
 
-Cod is a simple, light, functional library for simple terminal I/O. It uses plain ANSI escape sequences to "draw" basic shapes and text to stdout; however, if the `input` feature is enabled, it uses the [`console`](https://crates.io/crates/console) crate to provide basic input gathering.
+Cod is a lightweight, (almost) zero-dependency command-line drawing utility.
+It works much like a basic C library, where you call functions to produce
+effects on the screen, rather than use a struct or some fancy macro syntax.
+*However*, it provides several conveniences above the ordinary C lib:
+- Namespacing, i.e. `cod::style::bold()` and `cod::color::with()`
+    - A prelude, imports all submodules
+- Closure-based styling, i.e. `style::with::bold(|| {...})`
+- Basic input gathering, i.e. `read::key()` or `read::line()`
+    - Optional, behind feature `input`
+    - Enables (and exposes) a dependency on
+      [`console`](https://crates.io/crates/console)
 
-It's designed to be easy-to-use, as well as extremely light. It provides very basic utilities for moving the cursor, clearing the screen or a section thereof, displaying textual "sprites", and changing the foreground/background colors.
+There are some examples in the `examples` directory, but as cod aims to be as
+simple to use as possible, they aren't prioritized. Moreover, everything in cod
+is well-documented, so it's arguably easier to just look through the docs!
 
-## Features
- - Rectangles, triangles, and lines
- - 8-bit and 24-bit color support
- - Text
- - Blitting `String`s, `Vec<String>`s, and `Vec<Vec<char>>`s
- - Basic feature-gated input gathering (`getch` and `getl` lookalikes)
+## Bold and faint
+
+You may notice that while there are separate functions for *enabling* bold and
+faint, they both share `de::weight`. That's because, true to ANSI form,
+terminals and VTE's can't agree on it, so we're stuck with only one way to
+disable both. That goes for both `with::bold` and `with::faint` as well!
+
+Additionally, on some terminals, bold and weight are mutually exclusive. On
+some, like Alacritty, they can coexist only if the text is uncolored. In
+general, be careful when using both at the same time.
 

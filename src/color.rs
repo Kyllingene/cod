@@ -1,3 +1,5 @@
+//! Utilities for setting and resetting color.
+
 use crate::escape;
 
 macro_rules! do_color {

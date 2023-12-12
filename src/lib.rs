@@ -7,46 +7,34 @@
 //!  - [`goto`]: Functions for moving the cursor around the screen.
 //!  - [`read`]: Functions for reading from stdin. Must specify feature `input` to use.
 //!
-//!  Both the `color` and `style` modules have three parts:
-//!     - The root, containing styling functions
-//!     - A `de` module, containing functions to reset styling
-//!     - A `with` module, containing functions to run code with certain styling
+//! Both the `color` and `style` modules have three parts:
+//! - The root, containing base functions
+//! - A `de` module, containing functions to reset the attributes
+//! - A `with` module, containing functions to run code with certain attributes
+#![warn(clippy::pedantic)]
+#![warn(missing_docs)]
 
 use std::io::{stdout, Write};
 
-/// When the `input` feature is enabled, `console` becomes required. For convenience,
-/// it's also re-exported here.
 #[cfg(feature = "input")]
-pub use console;
-#[cfg(feature = "input")]
-pub use console::Key;
+pub use console::{self, Key};
 
-/// Utilities for setting and resetting color.
-pub mod color;
-
-/// Utilities for clearing the screen.
 pub mod clear;
-
-/// Utilities for moving the cursor.
+pub mod color;
 pub mod goto;
-
-/// Utilities for modifying the look of the text.
+pub mod guard;
+pub mod prelude;
 pub mod style;
 
-/// Imports everything you need in an ergonomic fashion.
-pub mod prelude;
-
 mod line;
-use line::LineIter;
 
-/// Utilities for reading from stdin.
 #[cfg(feature = "input")]
 pub mod read;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum CodError {
-    InvalidOrthoLine(u32, u32, u32, u32),
-}
+/// The user attempted to draw a non-orthogonal line through an orthogonal
+/// function, such as [`orth_line`] or [`rect`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NonOrthogonal;
 
 enum BoxDrawingChar {
     Horizontal,
@@ -100,20 +88,16 @@ pub fn pixel(c: char, x: u32, y: u32) {
 }
 
 /// Draw an orthogonal line to the screen.
-pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
+///
+/// # Errors
+///
+/// If the given line is non-orthogonal, returns an error.
+pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
     if x1 != x2 && y1 != y2 {
-        return Err(CodError::InvalidOrthoLine(x1, y1, x2, y2));
+        return Err(NonOrthogonal);
     }
 
-    if x1 != x2 {
-        let mut x = x1.min(x2);
-
-        while x != x1.max(x2) + 1 {
-            pixel(c, x, y1);
-
-            x += 1;
-        }
-    } else {
+    if x1 == x2 {
         let mut y = y1.min(y2);
 
         while y != y1.max(y2) + 1 {
@@ -121,19 +105,28 @@ pub fn orth_line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodE
 
             y += 1;
         }
+    } else {
+        let mut x = x1.min(x2);
+
+        while x != x1.max(x2) + 1 {
+            pixel(c, x, y1);
+
+            x += 1;
+        }
     }
 
     Ok(())
 }
 
 /// Draw a line onto the screen.
+#[allow(clippy::missing_panics_doc)]
 pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) {
     if x1 == x2 || y1 == y2 {
         orth_line(c, x1, x2, y1, y2).unwrap();
         return;
     }
 
-    for (x, y) in LineIter::new(x1, y1, x2, y2) {
+    for (x, y) in line::Iter::new(x1, y1, x2, y2) {
         pixel(c, x, y);
     }
 }
@@ -176,7 +169,11 @@ pub fn blit_transparent<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
 }
 
 /// Draw a rectangle onto the screen.
-pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
+///
+/// # Errors
+///
+/// If the given line is non-orthogonal, returns an error.
+pub fn rect(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
     orth_line(c, x1, y1, x1, y2)?;
     orth_line(c, x1, y1, x2, y1)?;
     orth_line(c, x2, y2, x1, y2)?;
@@ -233,7 +230,11 @@ pub fn ascii_box_chars<T: IntoIterator<Item = char>>(s: T, x: u32, mut y: u32) {
 }
 
 /// Draw a box using ASCII box-drawing characters.
-pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
+///
+/// # Errors
+///
+/// If the given line is non-orthogonal, returns an error.
+pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
     orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y1, x2 - 1, y1)?;
     orth_line(BoxDrawingChar::Horizontal.into(), x1 + 1, y2, x2 - 1, y2)?;
     orth_line(BoxDrawingChar::Vertical.into(), x1, y1 + 1, x1, y2 - 1)?;
@@ -248,7 +249,11 @@ pub fn ascii_box(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
 }
 
 /// Draw a filled rectangle onto the screen.
-pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), CodError> {
+///
+/// # Errors
+///
+/// If the given line is non-orthogonal, returns an error.
+pub fn rect_fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
     let mut y = y1;
     while y != y2 {
         orth_line(c, x1, y, x2, y)?;
@@ -287,6 +292,10 @@ pub fn text<S: AsRef<str>>(s: S, x: u32, mut y: u32) {
 }
 
 /// Flush to stdout.
+///
+/// # Panics
+///
+/// If flushing fails, panics with `Failed to flush to stdout`.
 pub fn flush() {
     stdout().flush().expect("Failed to flush stdout");
 }

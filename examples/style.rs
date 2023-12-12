@@ -1,6 +1,8 @@
 use cod::prelude::*;
 
 fn main() {
+    let _g = guard::Reset;
+
     style::bold();
     print!("This is ");
 
@@ -9,8 +11,4 @@ fn main() {
     });
 
     println!(", but this is just bold.");
-
-    // this is necessary, otherwise shells like bash will get affected!
-    // this is why `with::` functions are much better.
-    style::de::bold();
 }

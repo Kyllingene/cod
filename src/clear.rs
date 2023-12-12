@@ -1,4 +1,6 @@
-use crate::escape;
+//! Utilities for clearing the screen.
+
+use crate::{escape, NonOrthogonal};
 
 /// Clear the screen (full clear, not scroll).
 pub fn all() {
@@ -11,6 +13,10 @@ pub fn line() {
 }
 
 /// Clear a portion of the screen. *Note:* will clear using the current background color.
-pub fn rect(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), crate::CodError> {
+///
+/// # Errors
+///
+/// If the rectangle was not orthogonal, returns `false`.
+pub fn rect(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
     crate::rect(' ', x1, y1, x2, y2)
 }

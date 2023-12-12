@@ -1,3 +1,12 @@
+//! Utilities for modifying the look of the text.
+//!
+//! Note that faint and bold are mutually exclusive on some terminals, and both
+//! [`de::bold`] AND [`de::faint`] will reset each other. This also means that
+//! [`with::bold`] and [`with::faint`] will reset both bold and faint on exit.
+//!
+//! Unfortunately, there's no cross-compatible way to disable *just* bold or
+//! *just* faint, so the two have to be lumped together into [`de::weight`].
+
 use crate::escape;
 
 macro_rules! do_style {
@@ -14,6 +23,7 @@ macro_rules! do_style {
 
 do_style!(bold: 1, faint: 2, italic: 3, underline: 4, strike: 9);
 
+/// Reset styling.
 pub mod de {
     use crate::escape;
 
@@ -34,7 +44,14 @@ pub mod de {
         };
     }
 
-    de_style!(bold: 22, faint: 22, italic: 23, underline: 24, strike: 29);
+    de_style!(italic: 23, underline: 24, strike: 29);
+
+    /// Disables both bold and faint styling.
+    ///
+    /// See module documentation for why.
+    pub fn weight() {
+        escape("22m");
+    }
 }
 
 /// Style your text through closures.
@@ -52,7 +69,7 @@ pub mod de {
 /// ```
 pub mod with {
     macro_rules! with_style {
-        ( $( $style:ident ),+ ) => {
+        ( $( $style:ident: $de:ident ),+ ) => {
             $(
                 /// Enable
                 #[doc = concat!(stringify!($style), ",")]
@@ -60,11 +77,17 @@ pub mod with {
                 pub fn $style(f: impl FnOnce()) {
                     super::$style();
                     (f)();
-                    super::de::$style();
+                    super::de::$de();
                 }
             )+
         };
     }
 
-    with_style!(bold, faint, italic, underline, strike);
+    with_style![
+        bold: weight,
+        faint: weight,
+        italic: italic,
+        underline: underline,
+        strike: strike
+    ];
 }

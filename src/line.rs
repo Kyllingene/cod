@@ -1,30 +1,31 @@
-//! The [`LineIter`] struct, for generating points on a line.
+//! The [`Iter`] struct, for generating points on a line.
+#![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
-pub struct LineIter {
-    x: i32,
-    y: i32,
+#[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
+pub struct Iter {
+    x: i64,
+    y: i64,
 
-    x1: i32,
-    y1: i32,
+    x1: i64,
+    y1: i64,
 
-    dx: i32,
-    dy: i32,
-    err: i32,
+    dx: i64,
+    dy: i64,
+    err: i64,
 
-    xx: i32,
-    xy: i32,
-    yx: i32,
-    yy: i32,
+    xx: i64,
+    xy: i64,
+    yx: i64,
+    yy: i64,
 }
 
-impl LineIter {
+impl Iter {
     pub fn new(x1: u32, y1: u32, x2: u32, y2: u32) -> Self {
         let mut li = Self {
-            x1: x1 as i32,
-            y1: y1 as i32,
-            dx: x2 as i32 - x1 as i32,
-            dy: y2 as i32 - y1 as i32,
+            x1: i64::from(x1),
+            y1: i64::from(y1),
+            dx: i64::from(x2) - i64::from(x1),
+            dy: i64::from(y2) - i64::from(y1),
             ..Default::default()
         };
 
@@ -35,25 +36,25 @@ impl LineIter {
 
         if li.dx > li.dy {
             li.xx = sx;
-            li.xy = 0i32;
-            li.yx = 0i32;
+            li.xy = 0i64;
+            li.yx = 0i64;
             li.yy = sy;
         } else {
             std::mem::swap(&mut li.dx, &mut li.dy);
-            li.xx = 0i32;
+            li.xx = 0i64;
             li.xy = sy;
             li.yx = sx;
-            li.yy = 0i32;
+            li.yy = 0i64;
         }
 
-        li.x1 = x1 as i32;
-        li.y1 = y1 as i32;
+        li.x1 = i64::from(x1);
+        li.y1 = i64::from(y1);
 
         li
     }
 }
 
-impl Iterator for LineIter {
+impl Iterator for Iter {
     type Item = (u32, u32);
 
     fn next(&mut self) -> Option<Self::Item> {

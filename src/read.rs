@@ -1,3 +1,5 @@
+//! Utilities for reading from stdin.
+
 use console::{Key, Term};
 
 /// Read a single key from stdin.
