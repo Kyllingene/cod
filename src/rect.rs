@@ -39,7 +39,7 @@ pub struct Chars {
     pub corner: char,
 }
 
-/// Draw a rectangle onto the screen using just the given characters.
+/// Draw an empty rectangle onto the screen.
 ///
 /// # Errors
 ///
@@ -49,6 +49,21 @@ pub fn line(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthog
     orth_line(c, x1, y1, x2, y1)?;
     orth_line(c, x2, y2, x1, y2)?;
     orth_line(c, x2, y2, x2, y1)?;
+
+    Ok(())
+}
+
+/// Draw a filled rectangle onto the screen.
+///
+/// # Errors
+///
+/// If the given line is non-orthogonal, returns an error.
+pub fn fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
+    let mut y = y1;
+    while y != y2 {
+        orth_line(c, x1, y, x2, y)?;
+        y += 1;
+    }
 
     Ok(())
 }
@@ -86,21 +101,6 @@ pub fn ascii(x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
     pixel(BoxDrawingChar::TopRightCorner.into(), x2, y1);
     pixel(BoxDrawingChar::BottomLeftCorner.into(), x1, y2);
     pixel(BoxDrawingChar::BottomRightCorner.into(), x2, y2);
-
-    Ok(())
-}
-
-/// Draw a filled rectangle onto the screen.
-///
-/// # Errors
-///
-/// If the given line is non-orthogonal, returns an error.
-pub fn fill(c: char, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<(), NonOrthogonal> {
-    let mut y = y1;
-    while y != y2 {
-        orth_line(c, x1, y, x2, y)?;
-        y += 1;
-    }
 
     Ok(())
 }
