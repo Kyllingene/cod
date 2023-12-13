@@ -1,4 +1,5 @@
 //! Utilities for reading from stdin.
+#![allow(clippy::must_use_candidate)]
 
 use console::{Key, Term};
 
