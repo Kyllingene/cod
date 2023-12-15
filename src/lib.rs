@@ -33,7 +33,7 @@ mod line;
 pub mod read;
 
 /// The user attempted to draw a non-orthogonal line through an orthogonal
-/// function, such as [`orth_line`] or [`rect::rect`].
+/// function, such as [`orth_line`] or [`rect::line`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NonOrthogonal;
 

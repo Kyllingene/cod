@@ -1,11 +1,8 @@
 //! Utilities for modifying the look of the text.
 //!
-//! Note that faint and bold are mutually exclusive on some terminals, and both
-//! [`de::bold`] AND [`de::faint`] will reset each other. This also means that
-//! [`with::bold`] and [`with::faint`] will reset both bold and faint on exit.
-//!
-//! Unfortunately, there's no cross-compatible way to disable *just* bold or
-//! *just* faint, so the two have to be lumped together into [`de::weight`].
+//! Note that faint and bold are mutually exclusive on some terminals, thus
+//! [`de::weight`] resets both simultaneously. This behavior extends to
+//! [`with::bold`] and [`with::faint`].
 
 use crate::escape;
 
@@ -40,6 +37,7 @@ pub mod de {
             /// Disable all style attributes.
             pub fn all() {
                 $($style();)+
+                weight();
             }
         };
     }
