@@ -112,9 +112,20 @@ pub fn blit<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
     }
 }
 
-/// Draw a "texture" onto the screen, skipping spaces.
-/// If you need to fill a blank, use a tab (`\t`) character.
-pub fn blit_transparent<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
+/// Draw a "texture" onto the screen, skipping over spaces.
+/// Replaces all `blank`s with actual spaces.
+///
+/// Example:
+///
+/// ```rust
+/// # use cod::prelude::*;
+///
+/// // prints `foobar`
+/// cod::blit("foobar", 0, 0);
+/// // updates to `to ban`
+/// cod::blit_transparent("t _  n", '_', 0, 0);
+/// ```
+pub fn blit_transparent<S: AsRef<str>>(src: S, blank: char, mut x: u32, mut y: u32) {
     let src = src.as_ref();
     let rows = src.split('\n').map(|s| s.chars());
 
@@ -123,7 +134,7 @@ pub fn blit_transparent<S: AsRef<str>>(src: S, mut x: u32, mut y: u32) {
         for c in row {
             match c {
                 ' ' => goto::right(1),
-                '\t' => pixel(' ', x, y),
+                ch if ch == blank => pixel(' ', x, y),
                 _ => pixel(c, x, y),
             }
             x += 1;
