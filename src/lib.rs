@@ -18,7 +18,6 @@ use std::io::{stdout, Write};
 
 #[cfg(feature = "input")]
 pub use console::{self, Key};
-
 pub mod clear;
 pub mod color;
 pub mod goto;
