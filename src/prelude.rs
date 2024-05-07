@@ -11,5 +11,5 @@
 
 pub use crate::{clear, color, goto, guard, rect, style};
 
-#[cfg(feature = "input")]
-pub use crate::read;
+#[cfg(feature = "crossterm")]
+pub use crate::{read, term};

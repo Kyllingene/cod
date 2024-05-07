@@ -1,6 +1,6 @@
 [package]
 name = "cod"
-version = "7.4.0"
+version = "8.0.0"
 edition = "2021"
 
 description = "A mini, functional terminal drawing utility."
@@ -14,7 +14,7 @@ categories = ["command-line-interface"]
 keywords = ["tui", "terminal", "command-line"]
 
 [dependencies]
-console = { version = "0.15", optional = true }
+crossterm = { version = "0.27", optional = true }
 
 [lib]
 name = "cod"
@@ -23,4 +23,4 @@ path = "src/lib.rs"
 [features]
 default = ["color_stack"]
 color_stack = []
-input = ["dep:console"]
+crossterm = ["dep:crossterm"]

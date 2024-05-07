@@ -25,12 +25,14 @@ pub mod guard;
 pub mod prelude;
 pub mod rect;
 pub mod style;
-mod println;
 
 mod line;
+mod println;
 
-#[cfg(feature = "input")]
+#[cfg(feature = "crossterm")]
 pub mod read;
+#[cfg(feature = "crossterm")]
+pub mod term;
 
 /// The user attempted to draw a non-orthogonal line through an orthogonal
 /// function, such as [`orth_line`] or [`rect::line`].
