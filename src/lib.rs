@@ -16,8 +16,9 @@
 
 use std::io::{stdout, Write};
 
-#[cfg(feature = "input")]
-pub use console::{self, Key};
+#[cfg(feature = "crossterm")]
+pub use crossterm;
+
 pub mod clear;
 pub mod color;
 pub mod goto;

@@ -8,15 +8,17 @@ it provides several conveniences above the ordinary C lib:
     - A prelude, imports all submodules
 - Closure-based styling, i.e. `style::with::bold(|| {...})`
 - Basic input gathering, i.e. `read::key()` or `read::line()`
-    - Optional, behind feature `input`
+    - Optional, behind feature `crossterm`
     - Enables (and exposes) a dependency on
-      [`console`](https://crates.io/crates/console)
+      [`crossterm`](https://crates.io/crates/crossterm)
+- Basic terminal operations (cursor style, raw mode, terminal size)
+    - Also behind feature `crossterm`
 
 There are some examples in the `examples` directory, but as cod aims to be as
 simple to use as possible, they aren't prioritized. Moreover, everything in cod
 is well-documented, so it's arguably easier to just look through the docs!
 
-*Warning:* most cod functions don't flush stdout, so if you run into issues, try that!
+*Note:* most cod functions don't flush stdout, so if you run into issues, try that!
 
 ## Bold and faint
 

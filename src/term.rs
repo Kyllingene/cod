@@ -4,11 +4,21 @@
 
 pub use crossterm::cursor::SetCursorStyle as CursorStyle;
 
+/// Tries to get the terminal size in columns and rows.
+///
+/// If you'd like sensible defaults on failure, see [`size_or`].
+#[allow(clippy::must_use_candidate)]
+pub fn size() -> Option<(u32, u32)> {
+    crossterm::terminal::size()
+        .ok()
+        .map(|(cols, rows)| (u32::from(cols), u32::from(rows)))
+}
+
 /// Returns the terminal size in columns and rows.
 ///
 /// If this fails to get the size, instead returns sensible defaults (80x24).
 #[allow(clippy::must_use_candidate)]
-pub fn size() -> (u32, u32) {
+pub fn size_or() -> (u32, u32) {
     crossterm::terminal::size()
         .map(|(cols, rows)| (u32::from(cols), u32::from(rows)))
         .unwrap_or((80, 24))
