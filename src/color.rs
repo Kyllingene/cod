@@ -14,8 +14,6 @@
 //! inner one exits, the color will be reset to normal, rather than continue
 //! the color that the outer function set.
 
-use crate::escape;
-
 #[cfg(feature = "color_stack")]
 pub use stack::{
     bg::pop as pop_bg, bg::push::bg as push_bg, bg::push::tc_bg as push_tc_bg, fg::pop as pop_fg,
@@ -25,7 +23,7 @@ pub use stack::{
 #[cfg(feature = "color_stack")]
 #[allow(clippy::missing_panics_doc)]
 mod stack {
-    use super::{bg, fg, tc_bg, tc_fg};
+    use super::raw::{bg, fg, tc_bg, tc_fg};
     use std::sync::Mutex;
 
     fn init_stack<T>() -> Mutex<Vec<T>> {
@@ -59,7 +57,6 @@ mod stack {
         static FG_COLOR_STACK: OnceLock<Mutex<Vec<Color>>> = OnceLock::new();
 
         use super::{init_stack, Color};
-        use crate::color::de;
 
         pub mod push {
             use crate::color::stack::{init_stack, Color};
@@ -68,6 +65,7 @@ mod stack {
 
             /// Pushes a color onto the foreground color stack.
             pub fn fg(c: u8) {
+                crate::color::raw::fg(c);
                 FG_COLOR_STACK
                     .get_or_init(init_stack)
                     .lock()
@@ -77,6 +75,7 @@ mod stack {
 
             /// Pushes an RGB color onto the foreground color stack.
             pub fn tc_fg(r: u8, g: u8, b: u8) {
+                crate::color::raw::tc_fg(r, g, b);
                 FG_COLOR_STACK
                     .get_or_init(init_stack)
                     .lock()
@@ -93,7 +92,7 @@ mod stack {
             if let Some(c) = stack.last() {
                 c.fg();
             } else {
-                de::fg();
+                crate::escape("39m");
             }
         }
     }
@@ -103,7 +102,6 @@ mod stack {
         static BG_COLOR_STACK: OnceLock<Mutex<Vec<Color>>> = OnceLock::new();
 
         use super::{init_stack, Color};
-        use crate::color::de;
 
         pub mod push {
             use crate::color::stack::{init_stack, Color};
@@ -112,6 +110,7 @@ mod stack {
 
             /// Pushes a color onto the background color stack.
             pub fn bg(c: u8) {
+                crate::color::raw::bg(c);
                 BG_COLOR_STACK
                     .get_or_init(init_stack)
                     .lock()
@@ -121,6 +120,7 @@ mod stack {
 
             /// Pushes an RGB color onto the background color stack.
             pub fn tc_bg(r: u8, g: u8, b: u8) {
+                crate::color::raw::tc_bg(r, g, b);
                 BG_COLOR_STACK
                     .get_or_init(init_stack)
                     .lock()
@@ -137,46 +137,78 @@ mod stack {
             if let Some(c) = stack.last() {
                 c.bg();
             } else {
-                de::bg();
+                crate::escape("49m");
             }
         }
     }
 }
 
 macro_rules! do_color {
-    ( $( $color:ident, $doc:literal, [ $( $arg:ident : $typ:ty ),+ ], $fmt:literal ),+ $(,)? ) => {
+    ( $( $color:ident, $de:ident, $doc:literal, [ $( $arg:ident : $typ:ty ),+ ], $fmt:literal ),+ $(,)? ) => {
         $(
             /// Set the
             #[doc = $doc]
             pub fn $color($($arg: $typ,)+) {
-                escape(format!(concat!($fmt, "m"), $($arg,)+));
+                #[cfg(not(feature = "color_stack"))]
+                { raw::$color($($arg,)+); }
+
+                #[cfg(feature = "color_stack")]
+                { stack::$de::push::$color($($arg),+); }
             }
         )+
+
+        mod raw {
+            $(
+                pub fn $color($($arg: $typ,)+) {
+                    crate::escape(format!($fmt, $($arg,)+));
+                }
+            )+
+        }
     };
 }
 
 do_color![
-    fg, "foreground color.", [color: u8], "38;5;{}",
-    bg, "background color.", [color: u8], "48;5;{}",
-    tc_fg, "foreground color, using true-color.", [r: u8, g: u8, b: u8], "38;2;{};{};{}",
-    tc_bg, "background color, using true-color.", [r: u8, g: u8, b: u8], "48;2;{};{};{}",
+    fg, fg, "foreground color.", [color: u8], "38;5;{}m",
+    bg, bg, "background color.", [color: u8], "48;5;{}m",
+    tc_fg, fg, "foreground color, using true-color.", [r: u8, g: u8, b: u8], "38;2;{};{};{}m",
+    tc_bg, bg, "background color, using true-color.", [r: u8, g: u8, b: u8], "48;2;{};{};{}m",
 ];
 
 /// Decolor your text.
 pub mod de {
-    use crate::escape;
-
     /// Reset the foreground color.
+    ///
+    /// With feature `color_stack`, instead pops the most recent color off.
     pub fn fg() {
-        escape("39m");
+        #[cfg(feature = "color_stack")]
+        {
+            super::stack::fg::pop();
+        }
+
+        #[cfg(not(feature = "color_stack"))]
+        {
+            crate::escape("39m");
+        }
     }
 
     /// Reset the background color.
+    ///
+    /// With feature `color_stack`, instead pops the most recent color off.
     pub fn bg() {
-        escape("49m");
+        #[cfg(feature = "color_stack")]
+        {
+            super::stack::bg::pop();
+        }
+
+        #[cfg(not(feature = "color_stack"))]
+        {
+            crate::escape("49m");
+        }
     }
 
     /// Reset all color.
+    ///
+    /// With feature `color_stack`, pops the most recent colors off.
     pub fn all() {
         fg();
         bg();
