@@ -106,6 +106,30 @@ pub fn disable_raw_mode() {
     crossterm::terminal::disable_raw_mode().expect("failed to disable raw mode");
 }
 
+/// A simple utility to guarantee the secondary screen is exited.
+///
+/// Exits the secondary screen when dropped (e.g. on program exit).
+#[must_use = "does nothing unless stored, consider `let _guard = ...`"]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct ScreenGuard;
+
+impl ScreenGuard {
+    /// Creates a new guard, entering the secondary screen in the process.
+    ///
+    /// If you don't wish to enter the secondary screen, instead construct the
+    /// guard directly.
+    pub fn enter() -> Self {
+        secondary_screen();
+        Self
+    }
+}
+
+impl Drop for ScreenGuard {
+    fn drop(&mut self) {
+        primary_screen();
+    }
+}
+
 /// A simple utility to guarantee raw mode is exited.
 ///
 /// Exits raw mode when dropped (e.g. on program exit).
