@@ -1,16 +1,4 @@
-//! A utility for command-line drawing.
-//!
-//! Many utilities are at the top-level; however, there are a couple of modules:
-//!  - [`clear`]: Functions for clearing the screen or sections thereof.
-//!  - [`color`]: Functions for setting the foreground/background color.
-//!  - [`style`]: Functions for styling text, i.e. bold, italic, underline.
-//!  - [`goto`]: Functions for moving the cursor around the screen.
-//!  - [`read`]: Functions for reading from stdin. Must specify feature `input` to use.
-//!
-//! Both the `color` and `style` modules have three parts:
-//! - The root, containing base functions
-//! - A `de` module, containing functions to reset the attributes
-//! - A `with` module, containing functions to run code with certain attributes
+//! A small library for command-line drawing.
 #![warn(clippy::pedantic)]
 #![warn(missing_docs)]
 
@@ -26,14 +14,13 @@ pub mod guard;
 pub mod prelude;
 pub mod rect;
 pub mod style;
+pub mod term;
 
 mod line;
 mod println;
 
 #[cfg(feature = "crossterm")]
 pub mod read;
-#[cfg(feature = "crossterm")]
-pub mod term;
 
 /// The user attempted to draw a non-orthogonal line through an orthogonal
 /// function, such as [`orth_line`] or [`rect::line`].

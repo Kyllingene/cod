@@ -1,15 +1,6 @@
-//! Imports everything you need in an ergonomic fashion.
-//!
-//! Imports the following:
-//! - [`clear`]
-//! - [`color`]
-//! - [`goto`]
-//! - [`guard`]
-//! - [`rect`]
-//! - [`style`]
-//! - [`read`] (with feature `input` enabled)
+#![allow(missing_docs)]
 
-pub use crate::{clear, color, goto, guard, rect, style};
+pub use crate::{clear, color, goto, guard, rect, style, term};
 
 #[cfg(feature = "crossterm")]
-pub use crate::{read, term};
+pub use crate::read;
