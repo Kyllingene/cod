@@ -2,7 +2,7 @@
 #![allow(clippy::must_use_candidate)]
 
 use crossterm::event::{Event, KeyEventKind};
-pub use crossterm::event::{KeyCode, KeyEvent};
+pub use crossterm::event::{KeyCode, KeyEvent, KeyState};
 
 /// Read a single key from stdin.
 pub fn key() -> Option<KeyEvent> {
