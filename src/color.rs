@@ -236,12 +236,17 @@ pub mod with {
                 #[doc = $doc]
                 /// then run the function, then reset it.
                 pub fn $color($($arg: $typ,)+ f: impl FnOnce()) {
+                    #[cfg(not(feature = "color_stack"))]
                     super::$color($($arg,)+);
+
                     #[cfg(feature = "color_stack")]
                     super::stack::$de::push::$color($($arg,)+);
+
                     (f)();
+
                     #[cfg(feature = "color_stack")]
                     super::stack::$de::pop();
+
                     #[cfg(not(feature = "color_stack"))]
                     super::de::$de();
                 }
