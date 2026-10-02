@@ -3,6 +3,10 @@
 /// Does not print a newline, and thus does not flush line buffering.
 #[macro_export]
 macro_rules! println {
+    () => {
+        $crate::goto::start();
+        $crate::goto::down(1);
+    };
     ( $($format:tt)* ) => {
         ::std::print!($($format)*);
         $crate::goto::start();
